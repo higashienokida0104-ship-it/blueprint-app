@@ -1401,10 +1401,21 @@ input[type="range"]::-webkit-slider-thumb {
         </div>
         <div style="padding:24px;">
           <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;text-align:center;">
-            BLUEPRINTのAI機能を使うには、<br>接続方法を選んでください。
+            <strong style="color:var(--gold);">Groq APIキー</strong>を設定するだけで<br>AI機能がすぐに使えます。無料・永続。
           </div>
 
-          <!-- 選択肢A: URLを持っている -->
+          <!-- 選択肢A: Groqキー（推奨） -->
+          <button onclick="wizGoStep(2)" style="display:block;width:100%;background:linear-gradient(135deg,rgba(212,175,113,0.1),rgba(212,175,113,0.05));border:1px solid var(--gold);border-radius:14px;padding:18px 16px;text-align:left;cursor:pointer;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:28px;">🤖</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:3px;">Groq APIキーを設定する（推奨）</div>
+                <div style="font-size:11px;color:var(--text-muted);line-height:1.5;">無料・永続・2分で完了。<strong style="color:var(--text-secondary);">console.groq.com</strong> で取得</div>
+              </div>
+            </div>
+          </button>
+
+          <!-- 選択肢B: URLを持っている -->
           <button onclick="wizGoStep(1)" style="display:block;width:100%;background:linear-gradient(135deg,rgba(212,175,113,0.1),rgba(212,175,113,0.05));border:1px solid var(--gold);border-radius:14px;padding:18px 16px;text-align:left;cursor:pointer;margin-bottom:12px;">
             <div style="display:flex;align-items:center;gap:12px;">
               <div style="font-size:28px;">🔗</div>
@@ -1664,38 +1675,61 @@ function isHostedOnServer() {
 }
 
 async function _geminiRequest(payload, model) {
+  const userText = payload; // プレーンテキスト
+
+  // ── 優先順位 ──────────────────────────────────────────
+  // 1. Groqキー（gsk_）→ ブラウザから直接Groq APIを呼ぶ（最推奨）
+  // 2. Cloudflare Worker プロキシURL
+  // 3. Vercelサーバー（/api/gemini）
+  // 4. Gemini APIキー（AIzaSy）
+  // 5. 未設定 → ウィザード表示
+
+  if (S.apiKey && S.apiKey.startsWith('gsk_')) {
+    // ── Groq 直接呼び出し（ブラウザ→Groq、CORSサポート済）──
+    let res, data;
+    try {
+      res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'Authorization': `Bearer ${S.apiKey}` },
+        body: JSON.stringify({
+          model: 'gemma2-9b-it',
+          messages: [{ role: 'user', content: userText }],
+          temperature: 0.7, max_tokens: 2048
+        })
+      });
+      data = await res.json();
+    } catch(e) {
+      throw new Error('Groq接続エラー: ' + e.message);
+    }
+    if (!res.ok) {
+      const msg = data?.error?.message || `Groq エラー (HTTP ${res.status})`;
+      if (res.status === 401) throw new Error('Groq APIキーが無効です。SETTINGSで確認してください。');
+      if (res.status === 429) throw new Error('Groq利用制限に達しました。しばらく待ってから再試行してください。');
+      throw new Error(msg);
+    }
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  // ── 以下はGemini系 ──────────────────────────────────
   const geminiPayload = {
-    contents: [{ parts: [{ text: payload }] }],
+    contents: [{ parts: [{ text: userText }] }],
     generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
   };
-
   let url, headers, body;
 
-  if (isHostedOnServer() && !S.workerUrl && !S.apiKey) {
-    // ── Vercel / サーバーデプロイ時：/api/gemini を自動使用 ──
-    // APIキー不要。サーバー側の環境変数で管理。
-    url     = '/api/gemini';
-    headers = { 'content-type': 'application/json' };
-    body    = JSON.stringify({ model, payload: geminiPayload });
-
-  } else if (S.workerUrl) {
-    // ── Cloudflare Worker プロキシ経由 ────────────────────
+  if (S.workerUrl) {
     url     = S.workerUrl.replace(/\/$/, '');
     headers = { 'content-type': 'application/json' };
     body    = JSON.stringify({ model, payload: geminiPayload });
-
-  } else if (S.apiKey) {
-    // ── 直接 API キーで呼び出し ───────────────────────────
-    if (S.apiKey.startsWith('AQ.') || S.apiKey.startsWith('ya29.')) {
-      alert('⚠️ OAuthトークン（AQ.・ya29. で始まるもの）は約1時間で期限切れになります。\nGoogle AI Studio で「APIキー」（AIzaSy... で始まるもの）を取得してください。\nhttps://aistudio.google.com/app/apikey');
-      return null;
-    }
+  } else if (isHostedOnServer() && !S.apiKey) {
+    url     = '/api/gemini';
+    headers = { 'content-type': 'application/json' };
+    body    = JSON.stringify({ model, payload: geminiPayload });
+  } else if (S.apiKey && S.apiKey.startsWith('AIzaSy')) {
     url     = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${S.apiKey}`;
     headers = { 'content-type': 'application/json' };
     body    = JSON.stringify(geminiPayload);
-
   } else {
-    // ── 設定なし（ローカルファイル起動時）────────────────
     showWizard();
     return null;
   }
@@ -1703,19 +1737,15 @@ async function _geminiRequest(payload, model) {
   let res;
   try {
     res = await fetch(url, { method: 'POST', headers, body });
-  } catch(networkErr) {
-    throw new Error('ネットワークエラーが発生しました。インターネット接続を確認してください。\n（' + networkErr.message + '）');
+  } catch(e) {
+    throw new Error('ネットワークエラー: ' + e.message);
   }
-
   if (!res.ok) {
     const errData = await res.json().catch(()=>({}));
     const status = res.status;
     let msg = errData.error?.message || `HTTP ${status}`;
-    if (status === 400) msg = 'リクエストエラーです。APIキーの形式を確認してください（AIzaSy... が必要です）。';
-    else if (status === 403) msg = 'APIキーが無効または権限がありません。Google AI StudioでAPIキーを確認してください。';
-    else if (status === 404) msg = `モデル「${model}」が見つかりません。SETTINGSでモデルを変更してください。`;
-    else if (status === 429) msg = 'APIの利用制限（レート制限）に達しました。しばらく待ってから再試行してください（無料枠: 1日1,500回）。';
-    else if (status >= 500) msg = 'Geminiサーバー側のエラーです。しばらく待ってから再試行してください。';
+    if (status === 401) msg = 'APIキーが無効です。SETTINGSで確認してください。';
+    if (status === 429) msg = '利用制限に達しました。しばらく待ってから再試行してください。';
     throw new Error(msg);
   }
   const data = await res.json();
