@@ -1,0 +1,18 @@
+{
+  "functions": {
+    "api/gemini.js": {
+      "memory": 128,
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/gemini",
+      "dest": "/api/gemini.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/mandala-goals.html"
+    }
+  ]
+}
