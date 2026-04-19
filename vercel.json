@@ -1,18 +1,19 @@
 {
   "functions": {
-    "api/gemini.js": {
-      "memory": 128,
-      "maxDuration": 30
-    }
+    "API/ai.js":          { "maxDuration": 30 },
+    "API/auth-login.js":  { "maxDuration": 10 },
+    "API/auth-signup.js": { "maxDuration": 10 },
+    "API/db-save.js":     { "maxDuration": 10 },
+    "API/db-load.js":     { "maxDuration": 10 },
+    "API/gemini.js":      { "maxDuration": 30 }
   },
-  "routes": [
-    {
-      "src": "/api/gemini",
-      "dest": "/api/gemini.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/mandala-goals.html"
-    }
+  "rewrites": [
+    { "source": "/.netlify/functions/ai",          "destination": "/API/ai" },
+    { "source": "/.netlify/functions/db-save",     "destination": "/API/db-save" },
+    { "source": "/.netlify/functions/db-load",     "destination": "/API/db-load" },
+    { "source": "/.netlify/functions/auth-login",  "destination": "/API/auth-login" },
+    { "source": "/.netlify/functions/auth-signup", "destination": "/API/auth-signup" },
+    { "source": "/",                               "destination": "/blueprint.html" },
+    { "source": "/((?!API/).*)",                   "destination": "/blueprint.html" }
   ]
 }
