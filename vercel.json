@@ -6,7 +6,10 @@
     { "src": "API/auth-signup.js", "use": "@vercel/node" },
     { "src": "API/db-save.js",     "use": "@vercel/node" },
     { "src": "API/db-load.js",     "use": "@vercel/node" },
-    { "src": "API/gemini.js",      "use": "@vercel/node" }
+    { "src": "API/gemini.js",      "use": "@vercel/node" },
+    { "src": "blueprint.html",     "use": "@vercel/static" },
+    { "src": "manifest.json",      "use": "@vercel/static" },
+    { "src": "sw.js",              "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/.netlify/functions/ai",          "dest": "/API/ai" },
@@ -14,6 +17,8 @@
     { "src": "/.netlify/functions/db-load",     "dest": "/API/db-load" },
     { "src": "/.netlify/functions/auth-login",  "dest": "/API/auth-login" },
     { "src": "/.netlify/functions/auth-signup", "dest": "/API/auth-signup" },
+    { "src": "/sw.js",                          "dest": "/sw.js" },
+    { "src": "/manifest.json",                  "dest": "/manifest.json" },
     { "src": "/(.*)",                           "dest": "/blueprint.html" }
   ]
 }
