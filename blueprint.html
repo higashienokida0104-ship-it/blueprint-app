@@ -918,11 +918,6 @@ input[type="range"]::-webkit-slider-thumb {
 
   <!-- ══ DREAMS Panel ══ -->
   <div id="dash-panel-dreams" style="display:none;">
-    <!-- ライフテーマ（自分軸） -->
-    <div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(212,175,113,0.08),rgba(212,175,113,0.02));">
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);margin-bottom:4px;">ライフテーマ（自分軸）</div>
-      <div id="dreams-tab-lifetheme" style="font-size:14px;font-weight:800;color:var(--gold);line-height:1.4;">—</div>
-    </div>
     <!-- ドリームボード -->
     <div id="dreams-tab-board-wrap" style="margin-bottom:14px;display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -1285,6 +1280,14 @@ input[type="range"]::-webkit-slider-thumb {
       <button class="btn-danger" style="font-size:12px;width:100%;" onclick="resetData()">全データをリセット</button>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+
+  <!-- システム診断 -->
+  <div class="card" style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">🔍 システム診断</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">ログイン・AI機能が動作しない場合、まず診断してください。</div>
+    <div id="diag-results" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:11px;font-family:monospace;"></div>
+    <button class="btn-ghost" style="width:100%;justify-content:center;font-size:12px;" id="btn-diag" onclick="runSystemDiag()">🔍 接続テストを実行</button>
   </div>
 
   <!-- モバイル設定 -->
@@ -2223,7 +2226,7 @@ async function _dbSaveNow() {
   if (!S.authToken) { _updateSyncIndicator('none'); return; }
   const data = JSON.stringify(S);
   try {
-    const res = await _fetchTimeout('/.netlify/functions/db-save', {
+    const res = await _fetchTimeout('/API/db-save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: S.authToken, data }),
@@ -2250,7 +2253,7 @@ function _handleAuthExpiry() {
 async function _dbLoad() {
   if (!S.authToken) return false;
   try {
-    const res = await _fetchTimeout('/.netlify/functions/db-load', {
+    const res = await _fetchTimeout('/API/db-load', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: S.authToken }),
@@ -2343,8 +2346,8 @@ async function doAuth() {
   if (btn) { btn.textContent = '処理中...'; btn.style.opacity = '0.7'; btn.style.pointerEvents = 'none'; }
 
   const endpoint = _authTab === 'login'
-    ? '/.netlify/functions/auth-login'
-    : '/.netlify/functions/auth-signup';
+    ? '/API/auth-login'
+    : '/API/auth-signup';
 
   try {
     // ── ネットワーク接続 ──
@@ -2357,7 +2360,7 @@ async function doAuth() {
         cache: 'no-store',
       }, 12000);
     } catch (netErr) {
-      if (errEl) errEl.textContent = 'サーバーに接続できません。Wi-Fi/通信環境を確認してください。';
+      if (errEl) errEl.textContent = 'サーバーに接続できません。Wi-Fi/通信環境を確認してください。(' + netErr.message + ')';
       _dlog('ERROR', '[Auth] fetch error:', netErr);
       return;
     }
@@ -2370,8 +2373,8 @@ async function doAuth() {
       data = await res.json();
     } catch (parseErr) {
       const txt = await res.text().catch(() => '');
-      const hint = res.status === 404 ? '（APIが見つかりません。設定を確認してください）'
-                 : res.status === 500 ? '（サーバー内部エラー）'
+      const hint = res.status === 404 ? '（APIエンドポイントが見つかりません。Vercelの環境変数とデプロイ設定を確認してください）'
+                 : res.status === 500 ? '（サーバー内部エラー — 環境変数 SUPABASE_URL / SUPABASE_SERVICE_KEY が未設定の可能性があります）'
                  : `（HTTP ${res.status}）`;
       if (errEl) errEl.textContent = `サーバーエラー ${hint}`;
       _dlog('ERROR', '[Auth] non-JSON response:', res.status, txt.substring(0, 300));
@@ -2582,7 +2585,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 // ════════════════════════════════════════════════
 /// ── AI 呼び出し共通関数 ───────────────────────────────────────
 // 優先順位:
-//  1. Netlify Function（/.netlify/functions/ai）— サーバー展開時、キー不要
+//  1. Netlify Function（/API/ai）— サーバー展開時、キー不要
 //  2. Groq 直接呼び出し（gsk_ キー）— ユーザー自身のキー
 //  3. 未設定 → セットアップウィザードを表示
 
@@ -2647,7 +2650,7 @@ async function checkNetlifyFunction() {
   if (_netlifyAvailable !== null && Date.now() - _netlifyCheckAt < 300000) return _netlifyAvailable;
   _netlifyAvailable = null;
   try {
-    const r = await _fetchTimeout('/.netlify/functions/ai', { method: 'OPTIONS', cache: 'no-store' }, 4000);
+    const r = await _fetchTimeout('/API/ai', { method: 'OPTIONS', cache: 'no-store' }, 4000);
     _netlifyAvailable = r.ok || r.status === 204 || r.status === 200 || r.status === 405;
     _netlifyCheckAt   = Date.now();
     _dlog('INFO', '[AI] checkNetlify:', _netlifyAvailable, 'status:', r.status);
@@ -2668,7 +2671,7 @@ async function _geminiRequest(payload) {
   if (netlifyOk) {
     let res, data;
     try {
-      res = await _fetchTimeout('/.netlify/functions/ai', {
+      res = await _fetchTimeout('/API/ai', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ prompt: userText }),
@@ -3088,10 +3091,6 @@ async function generatePersonality() {
 
 
 function _refreshDashDreams() {
-  // ライフテーマ
-  const ltEl = document.getElementById('dreams-tab-lifetheme');
-  if (ltEl) ltEl.textContent = S.mainGoal || '（未設定 — HOMEの編集ボタンから入力）';
-
   // ドリームボード
   const boardWrap = document.getElementById('dreams-tab-board-wrap');
   const board = S.dreamBoard || [];
@@ -3124,32 +3123,82 @@ function _refreshDashDreams() {
   }
 
   if (dreams.length === 0) {
-    listEl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px;">夢がまだ登録されていません<br><button onclick="showPage('list')" style="margin-top:10px;background:none;border:1px solid var(--gold-border);color:var(--gold);border-radius:8px;padding:6px 16px;cursor:pointer;font-size:11px;">夢を追加する →</button></div>`;
+    listEl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px;">
+      <div style="font-size:32px;margin-bottom:10px;">⭐</div>
+      夢がまだ登録されていません<br>
+      <button onclick="showPage('list')" style="margin-top:10px;background:rgba(212,175,113,0.1);border:1px solid var(--gold-border);color:var(--gold);border-radius:8px;padding:6px 16px;cursor:pointer;font-size:11px;font-weight:700;">夢を追加する →</button>
+    </div>`;
     return;
   }
 
-  // 夢リストをカテゴリ別に表示
-  listEl.innerHTML = S.areas.map((area, aIdx) => {
-    const items = dreams.filter(d => d.categoryId === aIdx);
-    if (!items.length) return '';
-    const rows = items.map((d, dIdx) => {
-      const gi = dreams.indexOf(d);
-      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-        <button onclick="toggleDreamDone(${gi})" style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${d.done?'#4ade80':'rgba(212,175,113,0.4)'};background:${d.done?'rgba(74,222,128,0.15)':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;">
-          ${d.done?'<svg width="9" height="9" viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,3" stroke="#4ade80" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
-        </button>
-        <span style="flex:1;font-size:12px;color:${d.done?'var(--text-muted)':'var(--text-primary)'};${d.done?'text-decoration:line-through;':''}">${esc(d.text)}</span>
-      </div>`;
-    }).join('');
-    return `<div class="card" style="padding:12px;margin-bottom:8px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <span style="font-size:18px;">${area.emoji}</span>
-        <span style="font-size:11px;font-weight:700;color:${area.color};">${esc(area.name)}</span>
-        <span style="font-size:10px;color:var(--text-muted);margin-left:auto;">${items.length}件</span>
+  // 夢リストをカテゴリ別に表示（写真あり対応）
+  const uncategorized = dreams.filter(d => d.categoryId == null);
+  const categorized   = S.areas.map((area, aIdx) => ({
+    area, aIdx, items: dreams.filter(d => d.categoryId === aIdx)
+  })).filter(g => g.items.length > 0);
+
+  const renderDreamItem = (d) => {
+    const gi = d._idx != null ? d._idx : dreams.indexOf(d);
+    // ドリームボード写真（キャプションと夢テキストの双方向マッチ）
+    const matchImg = (S.dreamBoard || []).find(img =>
+      img.caption && d.text && (
+        img.caption.includes(d.text.slice(0, 20)) ||
+        d.text.includes(img.caption.slice(0, 20))
+      )
+    );
+    const imgHtml = matchImg
+      ? `<div style="width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid rgba(212,175,113,0.2);">
+           <img src="${esc(matchImg.url)}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.parentElement.style.display='none'">
+         </div>`
+      : '';
+    const taskCount = (d.tasks||[]).filter(t=>!t.done).length;
+    return `<div onclick="openDreamDetail(${gi})" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;">
+      <button onclick="event.stopPropagation();toggleDreamDone(${gi})" style="width:22px;height:22px;border-radius:50%;border:2px solid ${d.done?'#4ade80':'rgba(212,175,113,0.5)'};background:${d.done?'rgba(74,222,128,0.2)':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;transition:all .2s;">
+        ${d.done?'<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,3" stroke="#4ade80" stroke-width="2" fill="none" stroke-linecap="round"/></svg>':''}
+      </button>
+      ${imgHtml}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:${d.done?'400':'600'};color:${d.done?'var(--text-muted)':'var(--text-primary)'};${d.done?'text-decoration:line-through;':''}white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(d.text)}</div>
+        ${taskCount>0?`<div style="font-size:10px;color:var(--gold);margin-top:2px;">📋 ${taskCount}件進行中</div>`:''}
+        ${d.achievedAt?`<div style="font-size:10px;color:#4ade80;margin-top:2px;">✅ 達成 ${d.achievedAt}</div>`:''}
       </div>
-      ${rows}
+      <svg width="10" height="10" viewBox="0 0 10 10" style="flex-shrink:0;opacity:0.3;"><polyline points="3,2 7,5 3,8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+    </div>`;
+  };
+
+  const catHtml = categorized.map(({area, aIdx, items}) => {
+    const areaImgs = (area.dreamImages || []).slice(0, 6);
+    const imgsHtml = areaImgs.length > 0
+      ? `<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;">
+          ${areaImgs.map(img => `
+            <div style="flex-shrink:0;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid rgba(212,175,113,0.2);">
+              <img src="${esc(img.url)}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.parentElement.style.display='none'" title="${esc(img.caption||'')}">
+            </div>`).join('')}
+         </div>`
+      : '';
+    return `
+    <div class="card" style="padding:12px 14px;margin-bottom:8px;border-left:3px solid ${area.color};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${areaImgs.length > 0 ? '8' : '2'}px;">
+        <span style="font-size:16px;">${area.emoji}</span>
+        <span style="font-size:11px;font-weight:700;color:${area.color};">${esc(area.name)}</span>
+        <span style="font-size:10px;color:var(--text-muted);margin-left:auto;background:${area.color}22;border-radius:10px;padding:1px 8px;">${items.length}件</span>
+      </div>
+      ${imgsHtml}
+      ${items.map(d=>renderDreamItem(d)).join('')}
     </div>`;
   }).join('');
+
+  const uncatHtml = uncategorized.length ? `
+    <div class="card" style="padding:12px 14px;margin-bottom:8px;border-left:3px solid rgba(255,255,255,0.1);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+        <span style="font-size:16px;">📂</span>
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);">未分類</span>
+        <span style="font-size:10px;color:var(--text-muted);margin-left:auto;">${uncategorized.length}件</span>
+      </div>
+      ${uncategorized.map(d=>renderDreamItem(d)).join('')}
+    </div>` : '';
+
+  listEl.innerHTML = catHtml + uncatHtml;
 }
 
 function toggleDreamDone(idx) {
