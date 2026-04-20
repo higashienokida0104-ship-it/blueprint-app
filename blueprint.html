@@ -455,20 +455,20 @@ input[type="range"]::-webkit-slider-thumb {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 10px 0 8px;
+  gap: 2px;
+  padding: 9px 2px 7px;
   cursor: pointer;
   background: none;
   border: none;
   color: #3a3a55;
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   transition: color .25s;
   position: relative;
 }
 .nav-svg {
-  width: 20px; height: 20px;
+  width: 18px; height: 18px;
   stroke: currentColor;
   transition: stroke .25s;
   flex-shrink: 0;
@@ -866,18 +866,8 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
   </div>
 
-  <!-- ══ Today's Focus: Daily + Deadline ══ -->
+  <!-- ══ Today's Focus: Deadline only ══ -->
   <div id="dash-today-section" style="margin-bottom:14px;display:none;">
-
-    <!-- Daily recurring tasks -->
-    <div id="dash-daily-wrap" style="margin-bottom:10px;display:none;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-        <span style="font-size:12px;">🔁</span>
-        <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;">毎日タスク</div>
-        <div id="dash-daily-count" style="margin-left:auto;font-size:10px;font-weight:700;color:var(--gold);background:rgba(212,175,113,0.1);border:1px solid rgba(212,175,113,0.2);border-radius:6px;padding:1px 7px;"></div>
-      </div>
-      <div id="dash-daily-list" style="display:flex;flex-direction:column;gap:7px;"></div>
-    </div>
 
     <!-- Deadline tasks (sorted by nearest due date) -->
     <div id="dash-deadline-wrap" style="display:none;">
@@ -962,11 +952,8 @@ input[type="range"]::-webkit-slider-thumb {
 
   <!-- ══ MANDALA Panel ══ -->
   <div id="dash-panel-mandala" style="display:none;">
-    <!-- ライフテーマ（自分軸） -->
-    <div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(212,175,113,0.08),rgba(212,175,113,0.02));">
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);margin-bottom:4px;">ライフテーマ（自分軸）</div>
-      <div id="mandala-tab-lifetheme" style="font-size:14px;font-weight:800;color:var(--gold);line-height:1.4;">—</div>
-    </div>
+    <!-- ライフテーマ（自分軸）— MANDALAタブでは非表示（最上部に既表示） -->
+    <div style="display:none;"><div id="mandala-tab-lifetheme"></div></div>
     <!-- タスク達成率 -->
     <div class="card" style="margin-bottom:14px;padding:14px 16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
@@ -979,6 +966,17 @@ input[type="range"]::-webkit-slider-thumb {
       <div style="display:flex;justify-content:space-between;margin-top:6px;">
         <div style="font-size:10px;color:var(--text-muted);">完了 <strong id="mandala-tab-done" style="color:#4ade80;">0</strong></div>
         <div style="font-size:10px;color:var(--text-muted);">合計 <strong id="mandala-tab-total" style="color:var(--text-secondary);">0</strong></div>
+      </div>
+    </div>
+    <!-- 毎日タスク（達成率直下） -->
+    <div id="dash-daily-wrap" style="margin-bottom:14px;display:none;">
+      <div class="card" style="padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+          <span style="font-size:12px;">🔁</span>
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.12em;text-transform:uppercase;">毎日タスク</div>
+          <div id="dash-daily-count" style="margin-left:auto;font-size:10px;font-weight:700;color:var(--gold);background:rgba(212,175,113,0.1);border:1px solid rgba(212,175,113,0.2);border-radius:6px;padding:1px 7px;"></div>
+        </div>
+        <div id="dash-daily-list" style="display:flex;flex-direction:column;gap:7px;"></div>
       </div>
     </div>
     <!-- カテゴリ別タスク -->
@@ -1254,8 +1252,8 @@ input[type="range"]::-webkit-slider-thumb {
     <button id="test-api-btn"></button>
   </div>
 
-  <!-- デバッグログ -->
-  <div class="card" style="margin-bottom:14px;" id="debug-log-card">
+  <!-- デバッグログ（非表示：ログはlocalStorageに記録されている） -->
+  <div class="card" style="margin-bottom:14px;display:none;" id="debug-log-card">
     <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">🛠 デバッグログ</div>
     <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;line-height:1.6;">ログインやAI通信のエラー記録です。キャッシュクリア後も残ります。</div>
     <div id="debug-log-output" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;font-size:10px;font-family:monospace;color:#a3a3a3;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;">(ログなし)</div>
@@ -1276,6 +1274,14 @@ input[type="range"]::-webkit-slider-thumb {
   <button class="nav-btn active" onclick="showPage('dashboard')" data-page="dashboard">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12L12 3l9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
     <span>HOME</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('list')" data-page="list">
+    <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span>DREAMS</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('mandala')" data-page="mandala">
+    <svg class="nav-svg" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1" opacity=".5"/><rect x="1" y="9" width="6" height="6" rx="1" opacity=".5"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+    <span>MANDALA</span>
   </button>
   <button class="nav-btn" onclick="showPage('settings')" data-page="settings">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -3071,10 +3077,54 @@ function toggleDreamDone(idx) {
   _refreshDashDreams();
 }
 
+// MANDALAタブ内の毎日タスクを更新する
+function _refreshDashDailyInMandala() {
+  const dailyWrap  = document.getElementById('dash-daily-wrap');
+  const dailyList  = document.getElementById('dash-daily-list');
+  const dailyCount = document.getElementById('dash-daily-count');
+  if (!dailyWrap || !dailyList) return;
+
+  const today = todayStr();
+  const allRecurring = [];
+  S.areas.forEach(a => {
+    (a.tasks || []).filter(t => t.recurring).forEach(t => {
+      const doneToday = !!(t.history && t.history[today]);
+      allRecurring.push({ t, a, doneToday });
+    });
+  });
+
+  if (allRecurring.length === 0) {
+    dailyWrap.style.display = 'none';
+    return;
+  }
+  dailyWrap.style.display = 'block';
+  const doneCount = allRecurring.filter(x => x.doneToday).length;
+  if (dailyCount) dailyCount.textContent = `${doneCount}/${allRecurring.length} 今日`;
+  dailyList.innerHTML = allRecurring.map(({ t, a, doneToday }) => {
+    const streak = getStreak(t);
+    const taskIdx = a.tasks.indexOf(t);
+    const urgColor = doneToday ? '#4ade80' : a.color;
+    return `<div style="display:flex;align-items:center;gap:10px;background:${doneToday?'rgba(74,222,128,0.05)':'var(--bg-card)'};border:1px solid ${doneToday?'rgba(74,222,128,0.18)':a.color+'22'};border-left:3px solid ${urgColor};border-radius:10px;padding:10px 12px;cursor:pointer;transition:opacity 0.2s;"
+      onclick="dashToggleTask(${a.id},'${taskIdx}',${taskIdx});_refreshDashMandala();">
+      <div style="width:20px;height:20px;border-radius:6px;background:${doneToday?urgColor+'cc':'rgba(255,255,255,0.06)'};border:1.5px solid ${urgColor}66;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${doneToday?'#fff':urgColor};">
+        ${doneToday ? '✓' : '🔁'}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:${doneToday?'var(--text-muted)':'var(--text-primary)'};${doneToday?'text-decoration:line-through;':''};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.name)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${a.emoji} ${esc(a.name)}</div>
+      </div>
+      ${streak > 0 ? `<div style="font-size:11px;color:#f59e0b;flex-shrink:0;font-weight:700;">🔥 ${streak}日</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
 function _refreshDashMandala() {
-  // ライフテーマ
+  // ライフテーマ（非表示要素にも値をセット）
   const ltEl = document.getElementById('mandala-tab-lifetheme');
-  if (ltEl) ltEl.textContent = S.mainGoal || '（未設定 — HOMEの編集ボタンから入力）';
+  if (ltEl) ltEl.textContent = S.mainGoal || '';
+
+  // 毎日タスクをMANDALAタブ内で更新
+  _refreshDashDailyInMandala();
 
   // 達成率計算
   let totalTasks = 0, doneTasks = 0;
@@ -3467,12 +3517,12 @@ function refreshDashboard() {
     owrap.style.display = 'none';
   }
 
-  // ── Today's Focus section ──────────────────────────
+  // ── Today's Focus section（期限付きタスクのみ、毎日タスクはMANDALAタブ内） ──
   const todaySection = document.getElementById('dash-today-section');
   const dailyWrap    = document.getElementById('dash-daily-wrap');
   const deadlineWrap = document.getElementById('dash-deadline-wrap');
-  const hasFocus = allRecurring.length > 0 || allDeadline.length > 0;
-  todaySection.style.display = hasFocus ? 'block' : 'none';
+  // todaySection は期限付きタスクのみを管理
+  todaySection.style.display = allDeadline.length > 0 ? 'block' : 'none';
 
   // Daily (recurring) tasks
   if (allRecurring.length > 0) {
@@ -4541,8 +4591,9 @@ function renderGoalTabContent() {
         </div>
       </div>` : '';
 
+    const hasActions = (a.actions||[]).filter(x=>x&&x.trim()).length > 0;
     el.innerHTML = `
-      <div class="card">
+      <div class="card" style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
             <div style="font-size:13px;font-weight:700;">タスク管理</div>
@@ -4554,12 +4605,22 @@ function renderGoalTabContent() {
           ? `<div style="text-align:center;padding:24px 0;">
                <div style="font-size:32px;margin-bottom:8px;">📋</div>
                <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">タスクを追加して目標を具体化しましょう</div>
-               <div style="display:flex;gap:8px;justify-content:center;">
+               <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                  <button onclick="openAddTaskModal(false)" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--text-secondary);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">✅ 通常タスク</button>
                  <button onclick="openAddTaskModal(true)" style="background:rgba(212,175,113,0.08);border:1px solid rgba(212,175,113,0.25);color:var(--gold);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">🔁 毎日継続</button>
                </div>
              </div>`
           : recurringHtml + regularHtml
+        }
+      </div>
+      <!-- AI タスク自動生成（Actionベース） -->
+      <div class="card" style="background:linear-gradient(135deg,rgba(212,175,113,0.06),rgba(212,175,113,0.02));border-color:rgba(212,175,113,0.2);">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:4px;">✨ ActionからAIでタスクを生成</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.6;margin-bottom:12px;">設定した8つのアクションをもとに、各アクション1件以上の具体的タスクをAIが提案します。生成後は編集・削除が自由にできます。</div>
+        ${hasActions
+          ? `<button class="btn-ai" style="width:100%;justify-content:center;" id="btn-ai-gen-tasks" onclick="generateTasksFromActions()">✨ AIでタスクを自動生成する</button>`
+          : `<div style="text-align:center;padding:8px 0;font-size:11px;color:var(--text-muted);">まず「アクション」タブで8つのアクションを設定してください</div>
+             <button onclick="switchGoalTab('actions')" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;margin-top:6px;">⚡ アクションを設定する →</button>`
         }
       </div>`;
   }
@@ -4584,6 +4645,78 @@ function editGoalTask(taskIdx) {
   }
 }
 function updateProgress(val) { /* removed – auto-computed from tasks */ }
+
+// ── ActionベースのAIタスク自動生成 ────────────────────────────────────────
+async function generateTasksFromActions() {
+  const a = S.areas[S.currentAreaId];
+  if (!a) return;
+  const actions = (a.actions || []).filter(x => x && x.trim());
+  if (!actions.length) { showToast('⚠️ まずアクションを設定してください', 3000); return; }
+
+  const btn = document.getElementById('btn-ai-gen-tasks');
+  if (btn) { btn.textContent = '✨ AI生成中...'; btn.disabled = true; btn.style.opacity = '0.6'; }
+
+  const areaName = a.name || '分野';
+  const goal = a.goal || '';
+  const prompt = `あなたは目標達成コーチです。以下の分野の目標と8つのアクションをもとに、各アクションに対して最低1つ以上の具体的な実行タスクを提案してください。
+
+分野: ${areaName}
+目標: ${goal || '（未設定）'}
+アクション:
+${actions.map((act, i) => `${i + 1}. ${act}`).join('\n')}
+
+【出力ルール】
+- 各アクションに対し、具体的・実行可能なタスクを1〜2個提案
+- タスクは「〜する」「〜を行う」など行動形式で15〜30文字以内
+- JSON形式で出力する。スキーマ: { "tasks": [ { "action": "アクション名", "tasks": ["タスク1", "タスク2"] }, ... ] }
+- JSON以外のテキストは一切含めない`;
+
+  try {
+    const text = await callGemini(prompt);
+    if (!text) {
+      if (btn) { btn.textContent = '✨ AIでタスクを自動生成する'; btn.disabled = false; btn.style.opacity = '1'; }
+      return;
+    }
+
+    // JSONを抽出
+    let parsed;
+    try {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('JSONが見つかりません');
+      parsed = JSON.parse(match[0]);
+    } catch (e) {
+      _dlog('ERROR', '[TaskGen] JSON parse error:', e.message, text.substring(0, 200));
+      showToast('⚠️ AI応答の解析に失敗しました。再試行してください', 3500);
+      if (btn) { btn.textContent = '✨ AIでタスクを自動生成する'; btn.disabled = false; btn.style.opacity = '1'; }
+      return;
+    }
+
+    const generated = parsed.tasks || [];
+    let addedCount = 0;
+    generated.forEach(group => {
+      const taskNames = group.tasks || [];
+      taskNames.forEach(name => {
+        if (name && name.trim()) {
+          a.tasks.push({ name: name.trim(), done: false, recurring: false, createdAt: Date.now() });
+          addedCount++;
+        }
+      });
+    });
+
+    if (addedCount > 0) {
+      save();
+      renderGoalTabContent();
+      showToast(`✦ ${addedCount}件のタスクを追加しました`);
+      _dlog('INFO', '[TaskGen] added', addedCount, 'tasks to area', areaName);
+    } else {
+      showToast('⚠️ タスクが生成されませんでした', 3000);
+    }
+  } catch (e) {
+    _dlog('ERROR', '[TaskGen] error:', e.message);
+    showToast('⚠️ 生成エラー: ' + e.message, 4000);
+    if (btn) { btn.textContent = '✨ AIでタスクを自動生成する'; btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
 
 // ─── Date Utils ──────────────────────────
 function todayStr() {
