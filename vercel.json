@@ -1,10 +1,24 @@
 {
-  "rewrites": [
-    { "source": "/.netlify/functions/ai",          "destination": "/api/ai" },
-    { "source": "/.netlify/functions/db-save",     "destination": "/api/db-save" },
-    { "source": "/.netlify/functions/db-load",     "destination": "/api/db-load" },
-    { "source": "/.netlify/functions/auth-login",  "destination": "/api/auth-login" },
-    { "source": "/.netlify/functions/auth-signup", "destination": "/api/auth-signup" },
-    { "source": "/((?!api/).*)",                   "destination": "/blueprint.html" }
+  "version": 2,
+  "builds": [
+    { "src": "API/ai.js",          "use": "@vercel/node" },
+    { "src": "API/auth-login.js",  "use": "@vercel/node" },
+    { "src": "API/auth-signup.js", "use": "@vercel/node" },
+    { "src": "API/db-save.js",     "use": "@vercel/node" },
+    { "src": "API/db-load.js",     "use": "@vercel/node" },
+    { "src": "API/gemini.js",      "use": "@vercel/node" },
+    { "src": "blueprint.html",     "use": "@vercel/static" },
+    { "src": "manifest.json",      "use": "@vercel/static" },
+    { "src": "sw.js",              "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/.netlify/functions/ai",          "dest": "/API/ai" },
+    { "src": "/.netlify/functions/db-save",     "dest": "/API/db-save" },
+    { "src": "/.netlify/functions/db-load",     "dest": "/API/db-load" },
+    { "src": "/.netlify/functions/auth-login",  "dest": "/API/auth-login" },
+    { "src": "/.netlify/functions/auth-signup", "dest": "/API/auth-signup" },
+    { "src": "/sw.js",                          "dest": "/sw.js" },
+    { "src": "/manifest.json",                  "dest": "/manifest.json" },
+    { "src": "/(.*)",                           "dest": "/blueprint.html" }
   ]
 }
