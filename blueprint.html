@@ -1254,6 +1254,17 @@ input[type="range"]::-webkit-slider-thumb {
     <button id="test-api-btn"></button>
   </div>
 
+  <!-- デバッグログ -->
+  <div class="card" style="margin-bottom:14px;" id="debug-log-card">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">🛠 デバッグログ</div>
+    <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;line-height:1.6;">ログインやAI通信のエラー記録です。キャッシュクリア後も残ります。</div>
+    <div id="debug-log-output" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;font-size:10px;font-family:monospace;color:#a3a3a3;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;">(ログなし)</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-ghost" style="flex:1;justify-content:center;font-size:11px;" onclick="refreshDebugLog()">🔄 更新</button>
+      <button class="btn-ghost" style="flex:1;justify-content:center;font-size:11px;color:#f87171;" onclick="_dlogClear();refreshDebugLog()">🗑 クリア</button>
+    </div>
+  </div>
+
 </div>
 </div>
 </div>
@@ -2136,12 +2147,12 @@ async function _dbSaveNow() {
   if (!S.authToken) { _updateSyncIndicator('none'); return; }
   const data = JSON.stringify(S);
   try {
-    const res = await fetch('/.netlify/functions/db-save', {
+    const res = await _fetchTimeout('/.netlify/functions/db-save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: S.authToken, data }),
-      signal: AbortSignal.timeout(8000),
-    });
+      cache: 'no-store',
+    }, 10000);
     if (res.status === 401) {
       _handleAuthExpiry();
       return;
@@ -2163,15 +2174,18 @@ function _handleAuthExpiry() {
 async function _dbLoad() {
   if (!S.authToken) return false;
   try {
-    const res = await fetch('/.netlify/functions/db-load', {
+    const res = await _fetchTimeout('/.netlify/functions/db-load', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: S.authToken }),
-      signal: AbortSignal.timeout(8000),
-    });
+      cache: 'no-store',
+    }, 10000);
     if (res.status === 401) { _handleAuthExpiry(); return false; }
-    if (!res.ok) return false;
-    const { data: jsonStr } = await res.json();
+    if (!res.ok) { console.error('[dbLoad] HTTP', res.status); return false; }
+    let _loadJson;
+    try { _loadJson = await res.json(); }
+    catch (pe) { console.error('[dbLoad] JSON parse error', pe); return false; }
+    const { data: jsonStr } = _loadJson;
     if (!jsonStr) return false;
 
     let dbData;
@@ -2257,15 +2271,40 @@ async function doAuth() {
     : '/.netlify/functions/auth-signup';
 
   try {
-    const res  = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
+    // ── ネットワーク接続 ──
+    let res;
+    try {
+      res = await _fetchTimeout(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        cache: 'no-store',
+      }, 12000);
+    } catch (netErr) {
+      if (errEl) errEl.textContent = 'サーバーに接続できません。Wi-Fi/通信環境を確認してください。';
+      _dlog('ERROR', '[Auth] fetch error:', netErr);
+      return;
+    }
+
+    _dlog('INFO', '[Auth] HTTP', res.status, endpoint);
+
+    // ── レスポンス解析 ──
+    let data;
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      const txt = await res.text().catch(() => '');
+      const hint = res.status === 404 ? '（APIが見つかりません。設定を確認してください）'
+                 : res.status === 500 ? '（サーバー内部エラー）'
+                 : `（HTTP ${res.status}）`;
+      if (errEl) errEl.textContent = `サーバーエラー ${hint}`;
+      _dlog('ERROR', '[Auth] non-JSON response:', res.status, txt.substring(0, 300));
+      return;
+    }
 
     if (!res.ok || data.error) {
-      if (errEl) errEl.textContent = data.error || 'エラーが発生しました';
+      _dlog('WARN', '[Auth] error response:', data.error, 'status:', res.status);
+      if (errEl) errEl.textContent = data.error || `エラーが発生しました (${res.status})`;
       return;
     }
 
@@ -2280,6 +2319,7 @@ async function doAuth() {
     }
 
     // ログイン成功
+    _dlog('INFO', '[Auth] login OK, userId:', data.userId);
     S.authToken        = data.token;
     S.authRefreshToken = data.refreshToken || '';
     S.authEmail        = data.email || email;
@@ -2485,16 +2525,55 @@ function isHostedOnServer() {
   return window.location.protocol === 'https:' || window.location.protocol === 'http:';
 }
 
-// Netlify Function が使えるか確認（キャッシュ）
+// iOS Safari 互換タイムアウト付き fetch（AbortSignal.timeout は Safari<16 非対応）
+function _fetchTimeout(url, opts, ms) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(tid));
+}
+
+// ── 永続デバッグログ（localStorage保存・キャッシュクリア後も残る） ──
+const _LOG_KEY = 'mg_debug_log';
+const _LOG_MAX  = 80;
+function _dlog(level, ...args) {
+  const msg = args.map(a => {
+    if (a instanceof Error) return `${a.name}: ${a.message}`;
+    if (typeof a === 'object') { try { return JSON.stringify(a); } catch { return String(a); } }
+    return String(a);
+  }).join(' ');
+  const entry = `[${new Date().toISOString().replace('T',' ').substring(0,19)}][${level}] ${msg}`;
+  // コンソールにも出す
+  if (level === 'ERROR') console.error(entry);
+  else if (level === 'WARN') console.warn(entry);
+  else console.log(entry);
+  // localStorage へ追記
+  try {
+    const prev = JSON.parse(localStorage.getItem(_LOG_KEY) || '[]');
+    prev.push(entry);
+    if (prev.length > _LOG_MAX) prev.splice(0, prev.length - _LOG_MAX);
+    localStorage.setItem(_LOG_KEY, JSON.stringify(prev));
+  } catch {}
+}
+function _dlogGet() {
+  try { return JSON.parse(localStorage.getItem(_LOG_KEY) || '[]'); } catch { return []; }
+}
+function _dlogClear() {
+  localStorage.removeItem(_LOG_KEY);
+  _dlog('INFO', '=== ログをクリアしました ===');
+}
+
+// Netlify/Vercel Function が使えるか確認（キャッシュ）
 let _netlifyAvailable = null;
 async function checkNetlifyFunction() {
   if (_netlifyAvailable !== null) return _netlifyAvailable;
   try {
-    const r = await fetch('/.netlify/functions/ai', {
-      method: 'OPTIONS', signal: AbortSignal.timeout(3000)
-    });
-    _netlifyAvailable = r.ok || r.status === 204 || r.status === 200;
-  } catch { _netlifyAvailable = false; }
+    const r = await _fetchTimeout('/.netlify/functions/ai', { method: 'OPTIONS', cache: 'no-store' }, 4000);
+    _netlifyAvailable = r.ok || r.status === 204 || r.status === 200 || r.status === 405;
+    _dlog('INFO', '[AI] checkNetlify:', _netlifyAvailable, 'status:', r.status);
+  } catch(e) {
+    _dlog('WARN', '[AI] checkNetlify failed:', e.message);
+    _netlifyAvailable = false;
+  }
   return _netlifyAvailable;
 }
 
@@ -2503,26 +2582,38 @@ async function _geminiRequest(payload) {
 
   // ── 1. Netlify Function 経由（サーバー上のGROQ_API_KEYを使用）──────
   const netlifyOk = await checkNetlifyFunction();
+  _dlog('INFO', '[AI] netlifyOk:', netlifyOk);
   if (netlifyOk) {
     let res, data;
     try {
-      res = await fetch('/.netlify/functions/ai', {
+      res = await _fetchTimeout('/.netlify/functions/ai', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt: userText })
-      });
-      data = await res.json();
+        body: JSON.stringify({ prompt: userText }),
+        cache: 'no-store',
+      }, 30000);
     } catch(e) {
+      _netlifyAvailable = false;
+      _dlog('ERROR', '[AI] fetch error:', e.message);
       throw new Error('サーバー接続エラー: ' + e.message);
     }
+    _dlog('INFO', '[AI] response status:', res.status);
+    try { data = await res.json(); }
+    catch(e) {
+      _dlog('ERROR', '[AI] JSON parse error, HTTP', res.status);
+      throw new Error(`AIレスポンス解析エラー (HTTP ${res.status})`);
+    }
+
     if (!res.ok) {
       if (res.status === 500 && data?.error?.message?.includes('GROQ_API_KEY')) {
-        // 環境変数未設定 → ユーザーキーにフォールバック
         _netlifyAvailable = false;
+        _dlog('WARN', '[AI] GROQ_API_KEY not set on server, fallback to user key');
       } else {
+        _dlog('ERROR', '[AI] API error:', data?.error?.message, res.status);
         throw new Error(data?.error?.message || `AIエラー (${res.status})`);
       }
     } else {
+      _dlog('INFO', '[AI] success, text length:', (data.text||'').length);
       return data.text || '';
     }
   }
@@ -4827,6 +4918,14 @@ function refreshSettings() {
       <span style="font-size:18px;flex-shrink:0;">${a.emoji}</span>
       <input type="text" id="area-nm-${i}" value="${esc(a.name)}" style="flex:1;font-size:13px;" />
     </div>`).join('');
+  refreshDebugLog();
+}
+function refreshDebugLog() {
+  const el = document.getElementById('debug-log-output');
+  if (!el) return;
+  const logs = _dlogGet();
+  el.textContent = logs.length ? logs.join('\n') : '(ログなし)';
+  el.scrollTop = el.scrollHeight;
 }
 function saveApiKey() {
   const v = document.getElementById('settings-api-key').value.trim();
@@ -5440,10 +5539,12 @@ window.addEventListener('beforeunload', () => {
 showPage('dashboard');
 
 // 起動時：認証チェック → クラウド同期
+_dlog('INFO', '=== アプリ起動 ===', navigator.userAgent.substring(0, 60));
 _getOrCreateUserId();
 const _skipped = localStorage.getItem('mg_authSkipped') === '1';
 if (S.authToken) {
   // ログイン済み → クラウド同期
+  _dlog('INFO', '[Start] authToken あり → クラウド同期');
   setTimeout(async () => {
     const updated = await _dbLoad();
     if (updated) { showPage('dashboard'); showToast('☁️ クラウドからデータを同期しました'); }
@@ -5451,6 +5552,7 @@ if (S.authToken) {
   }, 1200);
 } else if (!_skipped) {
   // 未ログイン・スキップなし → 認証モーダルを表示
+  _dlog('INFO', '[Start] 未ログイン → 認証モーダル表示');
   setTimeout(showAuthModal, 600);
 }
 

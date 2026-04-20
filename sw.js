@@ -1,5 +1,5 @@
-// BLUEPRINT PWA Service Worker v3
-const CACHE_NAME = 'blueprint-v3';
+// BLUEPRINT PWA Service Worker v4
+const CACHE_NAME = 'blueprint-v4';
 
 const STATIC_ASSETS = [
   '/manifest.json',
