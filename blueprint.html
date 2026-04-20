@@ -923,6 +923,14 @@ input[type="range"]::-webkit-slider-thumb {
       <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);margin-bottom:4px;">ライフテーマ（自分軸）</div>
       <div id="dreams-tab-lifetheme" style="font-size:14px;font-weight:800;color:var(--gold);line-height:1.4;">—</div>
     </div>
+    <!-- ドリームボード -->
+    <div id="dreams-tab-board-wrap" style="margin-bottom:14px;display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;">🌠 ドリームボード</div>
+        <button onclick="showPage('list')" style="background:none;border:none;color:var(--gold);font-size:10px;cursor:pointer;font-weight:700;">編集 →</button>
+      </div>
+      <div id="dreams-tab-board-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:4px;"></div>
+    </div>
     <!-- 夢の数 -->
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <div class="card" style="flex:1;text-align:center;padding:12px 6px;">
@@ -978,6 +986,14 @@ input[type="range"]::-webkit-slider-thumb {
         </div>
         <div id="dash-daily-list" style="display:flex;flex-direction:column;gap:7px;"></div>
       </div>
+    </div>
+    <!-- ドリームボード（ミニ） -->
+    <div id="mandala-tab-board-wrap" style="margin-bottom:14px;display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;">🌠 ドリームボード</div>
+        <button onclick="showPage('list')" style="background:none;border:none;color:var(--gold);font-size:10px;cursor:pointer;font-weight:700;">編集 →</button>
+      </div>
+      <div id="mandala-tab-board-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;"></div>
     </div>
     <!-- カテゴリ別タスク -->
     <div id="dash-mandala-cards" style="display:flex;flex-direction:column;gap:12px;"></div>
@@ -1058,7 +1074,60 @@ input[type="range"]::-webkit-slider-thumb {
   <div id="list-by-category" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div id="list-uncategorized" style="margin-top:0;"></div>
 
+  <!-- ドリームボード -->
+  <div style="margin-top:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <div class="page-title" style="font-size:12px;">DREAM BOARD</div>
+        <div style="font-size:15px;font-weight:800;color:var(--text-primary);">ドリームボード</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">理想の未来をイメージする写真を集めよう</div>
+      </div>
+      <button class="btn-ai" style="font-size:11px;padding:8px 14px;flex-shrink:0;" onclick="openDreamBoardAdd()">＋ 写真を追加</button>
+    </div>
+    <div id="dream-board-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+    <div id="dream-board-empty" style="display:none;border:1.5px dashed rgba(212,175,113,0.2);border-radius:14px;padding:32px 20px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:10px;">🌠</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">ドリームボードを始めよう</div>
+      <div style="font-size:11px;color:var(--text-muted);line-height:1.7;">目標達成後の理想の生活・欲しいもの・行きたい場所などの写真を追加してください。毎日見ることでビジョンが鮮明になります。</div>
+      <button class="btn-primary" style="margin-top:14px;" onclick="openDreamBoardAdd()">＋ 最初の写真を追加</button>
+    </div>
+  </div>
+
 </div>
+</div>
+
+<!-- ══ Dream Board Add Modal ══ -->
+<div id="modal-dream-board" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:14px;font-weight:800;margin-bottom:16px;">📸 ドリームボードに追加</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;">① 端末の写真から選ぶ</div>
+      <label style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1.5px dashed rgba(212,175,113,0.3);border-radius:10px;padding:14px;cursor:pointer;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-primary);">写真を選択</div>
+          <div style="font-size:10px;color:var(--text-muted);">JPG / PNG / GIF / WebP</div>
+        </div>
+        <input type="file" accept="image/*" id="dream-board-file-input" style="display:none" onchange="onDreamBoardFileSelected(event)">
+      </label>
+      <div id="dream-board-preview" style="display:none;margin-top:10px;border-radius:10px;overflow:hidden;max-height:180px;text-align:center;">
+        <img id="dream-board-preview-img" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:10px;">
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">② または画像URLを入力</div>
+      <input type="url" id="dream-board-url-input" placeholder="https://..." style="font-size:12px;" oninput="onDreamBoardUrlInput(this.value)">
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">③ キャプション（任意）</div>
+      <input type="text" id="dream-board-caption" placeholder="例：2026年にここへ旅行する" style="font-size:12px;">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn-ghost" style="flex:1;" onclick="closeModal('modal-dream-board')">キャンセル</button>
+      <button class="btn-primary" style="flex:1;" onclick="saveDreamBoardImage()">追加する</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -1853,7 +1922,8 @@ let S = {
     tasks: [], progress: 0,
     dreamImages: [] // {url, caption}
   })),
-  bucketList: [],  // {text, categoryId, done, _idx}
+  bucketList: [],   // {text, categoryId, done, _idx}
+  dreamBoard: [],   // {id, url, caption, addedAt}  ← ドリームボード写真
   currentAreaId: 0,
   currentGoalTab: 'vision',
   _cellEdit: null,
@@ -2451,6 +2521,7 @@ function _applyStateData(d) {
   S.authEmail          = d.authEmail          || S.authEmail || '';
   S.mainGoal           = d.mainGoal           || '';
   S.bucketList  = (d.bucketList||[]).map((i,idx)=>({actions:[],tasks:[],createdAt:null,achievedAt:null,...i,_idx:idx}));
+  S.dreamBoard  = (d.dreamBoard||[]).map(img=>({ id: img.id||Date.now()+'', url: img.url||'', caption: img.caption||'', addedAt: img.addedAt||'' }));
   S.currentAreaId  = d.currentAreaId  || 0;
   S.currentGoalTab = d.currentGoalTab || 'vision';
   if (d.areas && d.areas.length === 8) {
@@ -2493,7 +2564,7 @@ function showPage(id) {
   document.querySelectorAll('.nav-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.page === id);
   });
-  if (id==='dashboard') refreshDashboard();
+  if (id==='dashboard') { refreshDashboard(); _refreshDashDreams(); }
   if (id==='list')      refreshList();
   if (id==='mandala')   refreshMandala();
   if (id==='goal')      refreshGoalPage();
@@ -2568,17 +2639,22 @@ function _dlogClear() {
   _dlog('INFO', '=== ログをクリアしました ===');
 }
 
-// Netlify/Vercel Function が使えるか確認（キャッシュ）
+// Netlify/Vercel Function が使えるか確認（キャッシュ: 5分で自動リセット）
 let _netlifyAvailable = null;
+let _netlifyCheckAt   = 0;
 async function checkNetlifyFunction() {
-  if (_netlifyAvailable !== null) return _netlifyAvailable;
+  // 5分経過したら再チェック（デプロイ直後などに対応）
+  if (_netlifyAvailable !== null && Date.now() - _netlifyCheckAt < 300000) return _netlifyAvailable;
+  _netlifyAvailable = null;
   try {
     const r = await _fetchTimeout('/.netlify/functions/ai', { method: 'OPTIONS', cache: 'no-store' }, 4000);
     _netlifyAvailable = r.ok || r.status === 204 || r.status === 200 || r.status === 405;
+    _netlifyCheckAt   = Date.now();
     _dlog('INFO', '[AI] checkNetlify:', _netlifyAvailable, 'status:', r.status);
   } catch(e) {
     _dlog('WARN', '[AI] checkNetlify failed:', e.message);
     _netlifyAvailable = false;
+    _netlifyCheckAt   = Date.now();
   }
   return _netlifyAvailable;
 }
@@ -3016,6 +3092,12 @@ function _refreshDashDreams() {
   const ltEl = document.getElementById('dreams-tab-lifetheme');
   if (ltEl) ltEl.textContent = S.mainGoal || '（未設定 — HOMEの編集ボタンから入力）';
 
+  // ドリームボード
+  const boardWrap = document.getElementById('dreams-tab-board-wrap');
+  const board = S.dreamBoard || [];
+  if (boardWrap) boardWrap.style.display = board.length > 0 ? 'block' : 'none';
+  renderDreamBoardGrid('dreams-tab-board-grid', board, false);
+
   const radarEl   = document.getElementById('dash-dual-radar-svg');
   const listEl    = document.getElementById('dash-dreams-list');
   const radarWrap = document.getElementById('dash-dual-radar-wrap');
@@ -3077,6 +3159,89 @@ function toggleDreamDone(idx) {
   _refreshDashDreams();
 }
 
+// ════════════════════════════════════════════════
+// DREAM BOARD（ドリームボード）
+// ════════════════════════════════════════════════
+let _dreamBoardPendingUrl = '';
+
+function openDreamBoardAdd() {
+  _dreamBoardPendingUrl = '';
+  const fi = document.getElementById('dream-board-file-input');
+  const ui = document.getElementById('dream-board-url-input');
+  const ci = document.getElementById('dream-board-caption');
+  const pv = document.getElementById('dream-board-preview');
+  if (fi) fi.value = '';
+  if (ui) ui.value = '';
+  if (ci) ci.value = '';
+  if (pv) pv.style.display = 'none';
+  openModal('modal-dream-board');
+}
+
+function onDreamBoardFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    _dreamBoardPendingUrl = e.target.result;
+    const pv  = document.getElementById('dream-board-preview');
+    const img = document.getElementById('dream-board-preview-img');
+    if (pv && img) { img.src = _dreamBoardPendingUrl; pv.style.display = 'block'; }
+    // URLフィールドをクリア
+    const ui = document.getElementById('dream-board-url-input');
+    if (ui) ui.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function onDreamBoardUrlInput(val) {
+  if (val && val.startsWith('http')) {
+    _dreamBoardPendingUrl = val.trim();
+    const fi = document.getElementById('dream-board-file-input');
+    if (fi) fi.value = '';
+    const pv  = document.getElementById('dream-board-preview');
+    const img = document.getElementById('dream-board-preview-img');
+    if (pv && img) { img.src = _dreamBoardPendingUrl; pv.style.display = 'block'; }
+  }
+}
+
+function saveDreamBoardImage() {
+  const urlInput = document.getElementById('dream-board-url-input');
+  const caption  = (document.getElementById('dream-board-caption')?.value || '').trim();
+  const url = _dreamBoardPendingUrl || urlInput?.value?.trim() || '';
+  if (!url) { showToast('⚠️ 写真を選ぶかURLを入力してください', 3000); return; }
+  S.dreamBoard.push({ id: Date.now() + '_' + Math.random().toString(36).slice(2,7), url, caption, addedAt: new Date().toISOString() });
+  save();
+  closeModal('modal-dream-board');
+  refreshList();           // DREAMSページ更新
+  _refreshDashDreams();    // HOMEのDREAMSタブ更新
+  _refreshDashMandala();   // HOMEのMANDALAタブ更新
+  showToast('🌠 ドリームボードに追加しました');
+}
+
+function removeDreamBoardItem(id) {
+  S.dreamBoard = S.dreamBoard.filter(img => img.id !== id);
+  save();
+  refreshList();
+  _refreshDashDreams();
+  _refreshDashMandala();
+  showToast('削除しました');
+}
+
+function renderDreamBoardGrid(containerId, images, showDelete) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!images || images.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = images.map(img => `
+    <div style="position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;background:rgba(255,255,255,0.04);">
+      <img src="${esc(img.url)}" alt="${esc(img.caption)}"
+        style="width:100%;height:100%;object-fit:cover;display:block;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,0.04);">🖼️</div>
+      ${img.caption ? `<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.7));padding:6px 6px 4px;font-size:9px;color:#fff;font-weight:600;line-height:1.3;">${esc(img.caption)}</div>` : ''}
+      ${showDelete ? `<button onclick="removeDreamBoardItem('${img.id}')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>` : ''}
+    </div>`).join('');
+}
+
 // MANDALAタブ内の毎日タスクを更新する
 function _refreshDashDailyInMandala() {
   const dailyWrap  = document.getElementById('dash-daily-wrap');
@@ -3125,6 +3290,12 @@ function _refreshDashMandala() {
 
   // 毎日タスクをMANDALAタブ内で更新
   _refreshDashDailyInMandala();
+
+  // ドリームボード（ミニ）
+  const mbWrap = document.getElementById('mandala-tab-board-wrap');
+  const board  = S.dreamBoard || [];
+  if (mbWrap) mbWrap.style.display = board.length > 0 ? 'block' : 'none';
+  renderDreamBoardGrid('mandala-tab-board-grid', board.slice(0, 8), false);
 
   // 達成率計算
   let totalTasks = 0, doneTasks = 0;
@@ -3918,6 +4089,13 @@ function refreshList() {
 
   // カテゴリ分布リングを更新
   refreshDreamDistribution();
+
+  // ドリームボードグリッドを更新
+  const board = S.dreamBoard || [];
+  const boardGrid  = document.getElementById('dream-board-grid');
+  const boardEmpty = document.getElementById('dream-board-empty');
+  if (boardGrid)  { renderDreamBoardGrid('dream-board-grid', board, true); boardGrid.style.display  = board.length ? 'grid' : 'none'; }
+  if (boardEmpty) boardEmpty.style.display = board.length ? 'none' : 'block';
 }
 
 function addBulkItems() {
