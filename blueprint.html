@@ -770,7 +770,7 @@ input[type="range"]::-webkit-slider-thumb {
   <div class="card card-glow" style="margin-bottom:16px;cursor:pointer;" onclick="editMainGoal()">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
       <div style="flex:1;min-width:0;">
-        <div class="label-xs" style="margin-bottom:6px;letter-spacing:0.15em;">LIFE THEME</div>
+        <div class="label-xs" style="margin-bottom:6px;letter-spacing:0.15em;">ライフテーマ（自分軸）</div>
         <div style="font-size:17px;font-weight:800;letter-spacing:-0.3px;line-height:1.3;" id="dash-main-goal">未設定<span style="color:var(--text-muted);font-weight:400;font-size:12px;"> — タップして設定</span></div>
       </div>
       <div style="font-size:11px;color:var(--gold);opacity:0.6;flex-shrink:0;">編集 ✎</div>
@@ -836,6 +836,36 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
   </div>
 
+
+  <!-- ══ キャリアアンカー診断 ══ -->
+  <div id="dash-career-wrap" style="margin-bottom:14px;display:none;">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);">✦ シャインのキャリアアンカー</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">あなたの価値観・強みの分布</div>
+        </div>
+        <button onclick="generateCareerAnchors()" id="btn-career-gen" style="background:rgba(212,175,113,0.1);border:1px solid var(--gold-border);color:var(--gold);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;">AI診断</button>
+      </div>
+      <div id="dash-career-radar" style="text-align:center;min-height:60px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:11px;">
+        「AI診断」ボタンを押してください
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ AI 人柄定義 ══ -->
+  <div id="dash-personality-wrap" style="margin-bottom:14px;display:none;">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);">✦ あなたを一言で表すと</div>
+        <button onclick="generatePersonality()" id="btn-personality-gen" style="background:rgba(212,175,113,0.1);border:1px solid var(--gold-border);color:var(--gold);border-radius:8px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;">AI生成</button>
+      </div>
+      <div id="dash-personality-result" style="text-align:center;padding:12px 8px;">
+        <div style="font-size:11px;color:var(--text-muted);">夢リストやMANDALAのデータからAIがあなたを言語化します</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ Today's Focus: Daily + Deadline ══ -->
   <div id="dash-today-section" style="margin-bottom:14px;display:none;">
 
@@ -865,19 +895,6 @@ input[type="range"]::-webkit-slider-thumb {
   <div class="sec-label" style="margin-bottom:10px;">分野目標 &amp; タスク</div>
   <div id="dash-areas" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
 
-  <!-- Quick Actions -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-    <button class="area-card" onclick="showPage('list')" style="text-align:left;">
-      <div style="font-size:22px;margin-bottom:6px;">⭐</div>
-      <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;color:var(--text-primary);">DREAMS</div>
-      <div style="font-size:9px;color:var(--text-muted);margin-top:2px;letter-spacing:0.06em;">Add & manage dreams</div>
-    </button>
-    <button class="area-card" onclick="showPage('mandala')" style="text-align:left;">
-      <div style="margin-bottom:6px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="var(--gold)" opacity="0.9"/><rect x="14" y="3" width="7" height="7" rx="1.5" fill="var(--gold)" opacity="0.6"/><rect x="3" y="14" width="7" height="7" rx="1.5" fill="var(--gold)" opacity="0.6"/><rect x="14" y="14" width="7" height="7" rx="1.5" fill="var(--gold)" opacity="0.9"/></svg></div>
-      <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;color:var(--text-primary);">MANDALA</div>
-      <div style="font-size:9px;color:var(--text-muted);margin-top:2px;letter-spacing:0.06em;">目標を俯瞰する</div>
-    </button>
-  </div>
 
   <!-- ══ Career Anchor Radar ══ -->
   <div id="dash-anchor-card" style="margin-bottom:16px;display:none;">
@@ -911,6 +928,25 @@ input[type="range"]::-webkit-slider-thumb {
 
   <!-- ══ DREAMS Panel ══ -->
   <div id="dash-panel-dreams" style="display:none;">
+    <!-- ライフテーマ（自分軸） -->
+    <div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(212,175,113,0.08),rgba(212,175,113,0.02));">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);margin-bottom:4px;">ライフテーマ（自分軸）</div>
+      <div id="dreams-tab-lifetheme" style="font-size:14px;font-weight:800;color:var(--gold);line-height:1.4;">—</div>
+    </div>
+    <!-- 夢の数 -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div class="card" style="flex:1;text-align:center;padding:12px 6px;">
+        <div style="font-size:24px;font-weight:900;" class="grad-gold" id="dreams-tab-count">0</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-weight:600;">夢の数</div>
+      </div>
+      <div class="card" style="flex:1;text-align:center;padding:12px 6px;">
+        <div style="font-size:24px;font-weight:900;color:#4ade80;" id="dreams-tab-done">0</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;font-weight:600;">達成済み</div>
+      </div>
+    </div>
+    <!-- 夢リスト -->
+    <div id="dash-dreams-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <!-- 夢レーダー -->
     <div id="dash-dual-radar-wrap" style="margin-bottom:14px;">
       <div class="card">
         <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);margin-bottom:2px;">✦ 夢レーダー</div>
@@ -922,11 +958,30 @@ input[type="range"]::-webkit-slider-thumb {
         </div>
       </div>
     </div>
-    <div id="dash-dreams-list" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
 
   <!-- ══ MANDALA Panel ══ -->
   <div id="dash-panel-mandala" style="display:none;">
+    <!-- ライフテーマ（自分軸） -->
+    <div class="card" style="margin-bottom:12px;background:linear-gradient(135deg,rgba(212,175,113,0.08),rgba(212,175,113,0.02));">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;color:var(--text-muted);margin-bottom:4px;">ライフテーマ（自分軸）</div>
+      <div id="mandala-tab-lifetheme" style="font-size:14px;font-weight:800;color:var(--gold);line-height:1.4;">—</div>
+    </div>
+    <!-- タスク達成率 -->
+    <div class="card" style="margin-bottom:14px;padding:14px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.12em;">曼荼羅 タスク達成率</div>
+        <span style="font-size:20px;font-weight:900;background:linear-gradient(135deg,var(--gold-dim),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" id="mandala-tab-pct">0%</span>
+      </div>
+      <div style="background:rgba(255,255,255,0.07);border-radius:4px;height:8px;overflow:hidden;">
+        <div id="mandala-tab-bar" style="height:8px;border-radius:4px;background:linear-gradient(90deg,var(--gold-dim),var(--gold));width:0%;transition:width .6s ease;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;">
+        <div style="font-size:10px;color:var(--text-muted);">完了 <strong id="mandala-tab-done" style="color:#4ade80;">0</strong></div>
+        <div style="font-size:10px;color:var(--text-muted);">合計 <strong id="mandala-tab-total" style="color:var(--text-secondary);">0</strong></div>
+      </div>
+    </div>
+    <!-- カテゴリ別タスク -->
     <div id="dash-mandala-cards" style="display:flex;flex-direction:column;gap:12px;"></div>
   </div>
 
@@ -1082,193 +1137,124 @@ input[type="range"]::-webkit-slider-thumb {
     <div style="font-size:11px;color:var(--text-muted);margin-top:6px;letter-spacing:0.04em;">アプリの設定を管理します</div>
   </div>
 
-  <!-- AI接続ステータス -->
-  <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,rgba(212,175,113,0.06),rgba(212,175,113,0.02));">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">AI 接続状況</div>
-
-    <!-- Netlify ステータス -->
-    <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:12px;margin-bottom:10px;">
-      <div style="font-size:22px;">🟢</div>
-      <div style="flex:1;">
-        <div style="font-size:12px;font-weight:700;color:#4ade80;" id="server-ai-label">AI サーバー</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">APIキー不要・誰でもすぐ使える</div>
-      </div>
-      <div style="font-size:10px;font-weight:700;color:#4ade80;" id="netlify-ai-badge">確認中...</div>
-    </div>
-
-    <!-- Groq 個人キー -->
-    <div style="padding:12px;background:rgba(212,175,113,0.05);border:1px solid var(--gold-border);border-radius:12px;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <div style="font-size:16px;">🔑</div>
-        <div style="font-size:12px;font-weight:700;color:var(--gold);">個人 Groq APIキー（任意）</div>
-        <div style="margin-left:auto;font-size:10px;font-weight:700;" id="groq-key-badge"></div>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.7;">
-        Netlifyがない場合でも、個人のGroqキーでAIが使えます。<br>
-        <a href="https://console.groq.com/keys" target="_blank" style="color:var(--gold);text-decoration:none;">→ Groq Console でAPIキーを無料取得（gsk_...）</a>
-      </div>
-      <input type="password" id="settings-api-key" placeholder="gsk_...（Groq APIキー）" autocomplete="off" />
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn-primary" style="flex:1;" onclick="saveApiKey()">保存</button>
-        <button id="test-api-btn" class="btn-secondary" style="flex:1;" onclick="testGroqKey()">テスト</button>
-      </div>
-      <div style="font-size:11px;text-align:center;margin-top:8px;" id="api-key-status"></div>
-    </div>
-
-    <!-- Netlify デプロイ手順 -->
-    <div style="padding:12px;background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.18);border-radius:12px;">
-      <div style="font-size:11px;font-weight:700;color:#818cf8;margin-bottom:6px;">📋 Netlify デプロイ手順（AI利用のため）</div>
-      <div style="font-size:11px;color:var(--text-muted);line-height:2.0;">
-        ① <a href="https://netlify.com" target="_blank" style="color:#818cf8;">netlify.com</a> に無料登録<br>
-        ② 「Mandala Goals」フォルダをドラッグ＆ドロップ<br>
-        ③ Site settings → Environment variables<br>
-        　　<code style="background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;">GROQ_API_KEY</code> = <code style="background:rgba(255,255,255,0.07);padding:1px 6px;border-radius:4px;">gsk_...</code> を追加<br>
-        ④ Deploys → Trigger deploy → 完了！
-      </div>
-    </div>
-
-    <!-- 互換性維持の隠しフィールド -->
-    <div style="display:none;">
-      <input type="url" id="settings-worker-url" />
-      <div id="settings-worker-section"></div>
-      <div id="settings-apikey-section"></div>
-      <div id="worker-url-status"></div>
-      <select id="settings-model-select"><option value="gemini-1.5-flash">gemini-1.5-flash</option></select>
-      <button id="test-worker-btn"></button>
-    </div>
-  </div>
-
-  <!-- Auth & Cloud Sync -->
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">☁️ アカウント・クラウド同期</div>
-
-    <!-- ログイン状態 -->
-    <div id="auth-status-card" style="padding:12px;border-radius:10px;margin-bottom:12px;border:1px solid rgba(74,222,128,0.25);background:rgba(74,222,128,0.05);">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
+  <!-- ── アプリの使い方 ── -->
+  <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,rgba(212,175,113,0.07),rgba(212,175,113,0.02));">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">📖 アプリの使い方</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:rgba(212,175,113,0.15);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0;">1</div>
         <div>
-          <div id="auth-status-label" style="font-size:12px;font-weight:700;color:#4ade80;">● ログイン中</div>
-          <div id="auth-status-email" style="font-size:11px;color:var(--text-muted);margin-top:2px;"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">MANDALAで目標を設定する</div>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">8分野（健康・仕事・家族など）に大目標とアクション・タスクを入力。81マスが埋まるほど人生が明確になります。</div>
         </div>
-        <button onclick="logout()" style="
-          background:rgba(180,30,30,0.15);border:1px solid rgba(220,50,50,0.3);
-          color:#f87171;border-radius:8px;padding:6px 12px;
-          font-size:11px;font-weight:700;cursor:pointer;">
-          ログアウト
-        </button>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:rgba(212,175,113,0.15);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0;">2</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">DREAMSに夢を書き出す</div>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">やりたいこと・欲しいもの・なりたい姿を自由に書き出します。カテゴリ分類でレーダーチャートに反映されます。</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:rgba(212,175,113,0.15);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0;">3</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">HOMEで毎日確認する</div>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">今日のタスクと期限付きタスクが一覧表示されます。AI診断でキャリアアンカーと人柄を分析できます。</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="width:26px;height:26px;border-radius:50%;background:rgba(212,175,113,0.15);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold);flex-shrink:0;">4</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">AIを活用する</div>
+          <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">HOMEのAI診断ボタンからキャリアアンカー分析・人柄定義を生成。各分野のタスク自動生成も使えます。</div>
+        </div>
       </div>
     </div>
-
-    <!-- 未ログイン状態 -->
-    <div id="auth-login-card" style="display:none;padding:12px;border-radius:10px;margin-bottom:12px;border:1px solid rgba(212,175,113,0.2);background:rgba(212,175,113,0.04);">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">ログインするとデータがクラウドに自動保存されます</div>
-      <button class="btn-primary" style="padding:10px;" onclick="showAuthModal()">ログイン / 新規登録 ✦</button>
-    </div>
-
-    <!-- 同期状態 -->
-    <div id="sync-indicator" style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">同期状態を確認中...</div>
   </div>
 
-  <!-- Main Goal -->
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;">人生テーマ</div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">曼荼羅チャートの中心に置かれます</div>
-    <input type="text" id="settings-main-goal" placeholder="例：自由で豊かな人生を生きる" />
-    <button class="btn-primary" style="margin-top:10px;" onclick="saveMainGoal()">保存</button>
-  </div>
-
-  <!-- Area Names -->
+  <!-- 分野名カスタマイズ -->
   <div class="card" style="margin-bottom:14px;">
     <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">分野名のカスタマイズ</div>
     <div style="display:flex;flex-direction:column;gap:8px;" id="settings-areas"></div>
     <button class="btn-primary" style="margin-top:12px;" onclick="saveAreaNames()">分野名を保存</button>
   </div>
 
-  <!-- Data -->
+  <!-- データを守る -->
   <div class="card" style="margin-bottom:14px;">
     <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:12px;">データを守る</div>
-
-    <!-- ── 自動保存ステータス ── -->
     <div id="storage-mode-card" style="padding:14px 16px;border-radius:12px;margin-bottom:14px;border:1px solid rgba(74,222,128,0.3);background:rgba(74,222,128,0.06);">
       <div style="display:flex;align-items:center;gap:12px;">
         <div id="storage-mode-icon" style="font-size:28px;flex-shrink:0;">✅</div>
         <div style="flex:1;">
           <div id="storage-mode-title" style="font-size:13px;font-weight:800;margin-bottom:3px;color:#4ade80;">データは自動的に保存されています</div>
-          <div id="storage-mode-desc"  style="font-size:11px;line-height:1.7;color:var(--text-secondary);">入力した内容はすぐに保存されます。保存ボタンを押す必要はありません。</div>
+          <div id="storage-mode-desc"  style="font-size:11px;line-height:1.7;color:var(--text-secondary);">入力した内容はすぐに保存されます。</div>
         </div>
       </div>
     </div>
-
-    <!-- ── 念のためのバックアップ ── -->
     <div style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;margin-bottom:12px;">
       <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">📦 念のためのバックアップ</div>
-      <div style="font-size:11px;color:var(--text-muted);line-height:1.7;margin-bottom:12px;">機種変更のときや、大切なデータをファイルとして保存しておきたいときに使えます。</div>
+      <div style="font-size:11px;color:var(--text-muted);line-height:1.7;margin-bottom:12px;">機種変更のときや、データをファイルとして保存したいときに使えます。</div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <button class="btn-ghost" style="flex:1;justify-content:center;font-size:12px;" onclick="exportData()">📤 バックアップを作成</button>
         <button class="btn-ghost" style="flex:1;justify-content:center;font-size:12px;" onclick="document.getElementById('import-file').click()">📥 バックアップから復元</button>
       </div>
       <div style="font-size:10px;color:var(--text-muted);text-align:center;" id="last-backup-label"></div>
     </div>
-
-    <!-- ── 出力ボタン ── -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-      <button onclick="exportPDF()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.25);color:#f87171;border-radius:var(--radius-md);padding:14px 10px;cursor:pointer;font-size:12px;font-weight:700;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          <line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>
-        </svg>
+      <button id="btn-export-pdf" onclick="exportPDF()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.25);color:#f87171;border-radius:var(--radius-md);padding:14px 10px;cursor:pointer;font-size:12px;font-weight:700;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
         <span>PDF出力</span><span style="font-size:9px;font-weight:400;color:rgba(248,113,113,0.7);">目標レポート</span>
       </button>
       <button onclick="exportExcel()" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.25);color:#34d399;border-radius:var(--radius-md);padding:14px 10px;cursor:pointer;font-size:12px;font-weight:700;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          <line x1="8" y1="13" x2="10" y2="13"/><line x1="14" y1="13" x2="16" y2="13"/>
-          <line x1="8" y1="17" x2="16" y2="17"/><line x1="11" y1="10" x2="13" y2="10"/>
-        </svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="10" y2="13"/><line x1="14" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="11" y1="10" x2="13" y2="10"/></svg>
         <span>Excel出力</span><span style="font-size:9px;font-weight:400;color:rgba(52,211,153,0.7);">タスク一覧</span>
       </button>
     </div>
-
-    <!-- ── リセット ── -->
+    <!-- PDF出力後の戻るボタン -->
+    <div id="pdf-back-wrap" style="display:none;margin-bottom:12px;">
+      <button onclick="document.getElementById('pdf-back-wrap').style.display='none'" style="width:100%;background:rgba(212,175,113,0.1);border:1px solid var(--gold-border);color:var(--gold);border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;">← 設定に戻る</button>
+    </div>
     <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
       <button class="btn-danger" style="font-size:12px;width:100%;" onclick="resetData()">全データをリセット</button>
     </div>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
   </div>
 
-  <!-- iPhone Tips -->
+  <!-- モバイル設定 -->
   <div class="card" style="margin-bottom:14px;">
     <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">モバイル設定</div>
     <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
       <strong style="color:var(--gold);">ホーム画面に追加する方法</strong><br>
-      1. SafariでこのHTMLファイルを開く<br>
+      1. SafariでこのURLを開く<br>
       2. 下部の共有ボタン（□↑）をタップ<br>
       3. 「ホーム画面に追加」を選択<br>
       4. アプリのようにアイコンから起動できます
     </div>
   </div>
 
-  <!-- About -->
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;">このアプリについて</div>
-    <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
-      スティーブン・コヴィーの<strong style="color:var(--gold);">「7つの習慣」</strong>の核心概念<br><strong style="color:var(--text-primary);">「すべてのものは二度作られる」</strong>をベースに設計。<br><br>
-      <span style="color:var(--gold);">第一の創造</span> — 心の中で鮮明にビジョンを描く<br>
-      <span style="color:var(--gold);">第二の創造</span> — 具体的なアクションで現実化する<br><br>
-      BLUEPRINT × 曼荼羅 × Gemini AI で目標達成を支援します。
-    </div>
-    <!-- Data persistence note -->
-    <div style="margin-top:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.08em;">💡 データについて</div>
-      <div style="font-size:11px;color:var(--text-muted);line-height:1.8;">
-        データは<strong style="color:var(--text-secondary);">このスマホ・PCのブラウザ</strong>に保存されます。<br>
-        ✅ 通常の操作では消えません<br>
-        ❌ 機種変更・ブラウザ変更では引き継がれません<br>
-        ❌ プライベートモード（シークレット）では保存されません<br><br>
-        <strong style="color:var(--gold);">→ 機種変更の前に「バックアップを作成」してください</strong>
-      </div>
-    </div>
+  <!-- 非表示：互換性維持 -->
+  <div style="display:none;">
+    <input type="url" id="settings-worker-url" />
+    <input type="text" id="settings-main-goal" />
+    <input type="password" id="settings-api-key" />
+    <div id="settings-worker-section"></div>
+    <div id="settings-apikey-section"></div>
+    <div id="worker-url-status"></div>
+    <div id="api-key-status"></div>
+    <div id="groq-key-badge"></div>
+    <div id="netlify-ai-badge"></div>
+    <div id="server-ai-label"></div>
+    <div id="auth-status-card"></div>
+    <div id="auth-login-card"></div>
+    <div id="sync-indicator"></div>
+    <div id="auth-status-label"></div>
+    <div id="auth-status-email"></div>
+    <select id="settings-model-select"><option value="gemini-1.5-flash">gemini-1.5-flash</option></select>
+    <button id="test-worker-btn"></button>
+    <button id="test-api-btn"></button>
   </div>
 
+</div>
 </div>
 </div>
 
@@ -1279,18 +1265,6 @@ input[type="range"]::-webkit-slider-thumb {
   <button class="nav-btn active" onclick="showPage('dashboard')" data-page="dashboard">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12L12 3l9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
     <span>HOME</span>
-  </button>
-  <button class="nav-btn" onclick="showPage('list')" data-page="list">
-    <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-    <span>DREAMS</span>
-  </button>
-  <button class="nav-btn" onclick="showPage('mandala')" data-page="mandala">
-    <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    <span>MANDALA</span>
-  </button>
-  <button class="nav-btn" onclick="showPage('goal')" data-page="goal">
-    <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="1"/><line x1="12" y1="23" x2="12" y2="21"/><line x1="3" y1="12" x2="1" y2="12"/><line x1="23" y1="12" x2="21" y2="12"/></svg>
-    <span>GOALS</span>
   </button>
   <button class="nav-btn" onclick="showPage('settings')" data-page="settings">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -2578,8 +2552,8 @@ async function _geminiRequest(payload) {
     return data.choices?.[0]?.message?.content || '';
   }
 
-  // ── 3. 未設定 → セットアップウィザード ─────────────────────────────
-  showWizard();
+  // ── 3. 未設定 → トースト通知（ウィザード非表示）─────────────────────────────
+  showToast('⚠️ AI機能が利用できません。ネットワーク接続を確認してください', 4000);
   return null;
 }
 
@@ -2818,80 +2792,312 @@ function _buildDualRadarSVG(unachieved, achieved) {
   </svg>`;
 }
 
-function _refreshDashDreams() {
-  const radarEl = document.getElementById('dash-dual-radar-svg');
-  const listEl  = document.getElementById('dash-dreams-list');
-  const radarWrap = document.getElementById('dash-dual-radar-wrap');
-  if (!radarEl || !listEl) return;
+// ═══════════════════════════════════════════════════════
+// キャリアアンカー レーダーチャート (SVG)
+// ═══════════════════════════════════════════════════════
+const CAREER_ANCHORS = [
+  '技術・機能', '管理能力', '自律・独立', '安定・安全',
+  '起業家精神', '社会貢献', '純粋な挑戦', 'ライフスタイル'
+];
 
-  const unachieved = new Array(8).fill(0);
-  const achieved   = new Array(8).fill(0);
-  (S.dreams||[]).forEach(d => {
-    const idx = (d.categoryId>=0 && d.categoryId<8) ? d.categoryId : 0;
-    if (d.done) achieved[idx]++; else unachieved[idx]++;
+function _buildCareerAnchorSVG(scores) {
+  const N = 8, CX = 130, CY = 130, R = 90, LR = 118;
+  const pts = (vals, scale) => vals.map((v, i) => {
+    const angle = (Math.PI * 2 / N) * i - Math.PI / 2;
+    const r = (v / 100) * R * scale;
+    return [CX + r * Math.cos(angle), CY + r * Math.sin(angle)];
   });
-  const total = [...unachieved,...achieved].reduce((a,b)=>a+b,0);
-  if (radarWrap) radarWrap.style.display = total===0 ? 'none' : 'block';
-  if (total > 0) radarEl.innerHTML = _buildDualRadarSVG(unachieved, achieved);
+  const poly = coords => coords.map(p => p.join(',')).join(' ');
+  const axes = Array.from({length: N}, (_, i) => {
+    const angle = (Math.PI * 2 / N) * i - Math.PI / 2;
+    return `<line x1="${CX}" y1="${CY}" x2="${CX + R * Math.cos(angle)}" y2="${CY + R * Math.sin(angle)}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+  }).join('');
+  const rings = [0.25, 0.5, 0.75, 1].map(r => {
+    const ringPts = Array.from({length: N}, (_, i) => {
+      const angle = (Math.PI * 2 / N) * i - Math.PI / 2;
+      return [CX + R * r * Math.cos(angle), CY + R * r * Math.sin(angle)].join(',');
+    }).join(' ');
+    return `<polygon points="${ringPts}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+  }).join('');
+  const fillPts = pts(scores, 1);
+  const labels = CAREER_ANCHORS.map((name, i) => {
+    const angle = (Math.PI * 2 / N) * i - Math.PI / 2;
+    const lx = CX + LR * Math.cos(angle);
+    const ly = CY + LR * Math.sin(angle);
+    const anchor = Math.abs(Math.cos(angle)) < 0.1 ? 'middle' : (Math.cos(angle) > 0 ? 'start' : 'end');
+    return `<text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" fill="rgba(255,255,255,0.6)" font-size="8.5" font-weight="600">${name}</text>`;
+  }).join('');
+  const scoreLabels = scores.map((v, i) => {
+    const angle = (Math.PI * 2 / N) * i - Math.PI / 2;
+    const r = (v / 100) * R;
+    const sx = CX + (r + 8) * Math.cos(angle);
+    const sy = CY + (r + 8) * Math.sin(angle);
+    return v > 20 ? `<text x="${sx}" y="${sy+3}" text-anchor="middle" fill="rgba(212,175,113,0.9)" font-size="9" font-weight="700">${v}</text>` : '';
+  }).join('');
+  return `<svg viewBox="0 0 260 260" width="260" height="260" style="overflow:visible;">
+    ${rings}${axes}
+    <polygon points="${poly(fillPts)}" fill="rgba(212,175,113,0.18)" stroke="rgba(212,175,113,0.7)" stroke-width="1.5"/>
+    ${fillPts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--gold)" opacity="0.9"/>`).join('')}
+    ${labels}${scoreLabels}
+  </svg>`;
+}
 
-  if (!S.dreams || S.dreams.length===0) {
+async function generateCareerAnchors() {
+  const btn = document.getElementById('btn-career-gen');
+  const el  = document.getElementById('dash-career-radar');
+  if (!el) return;
+  if (btn) { btn.textContent = '分析中...'; btn.disabled = true; }
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:11px;padding:20px;">AIが分析中です…</div>';
+
+  const dreams = (S.bucketList || []).map(d => d.text).join('、');
+  const mandala = S.areas.map(a => `${a.name}:${a.goal||'未設定'}`).join('、');
+  const prompt = `以下のデータを元に、シャインのキャリアアンカー8項目を0〜100でスコアリングしてください。
+夢リスト: ${dreams || '未登録'}
+MANDALAの分野と目標: ${mandala}
+ライフテーマ: ${S.mainGoal || '未設定'}
+
+JSON形式のみで回答してください（他のテキスト不要）:
+{"技術機能":XX,"管理能力":XX,"自律独立":XX,"安定安全":XX,"起業家精神":XX,"社会貢献":XX,"純粋挑戦":XX,"ライフスタイル":XX}`;
+
+  try {
+    const text = await callGemini(prompt);
+    if (!text) throw new Error('no response');
+    const m = text.match(/\{[\s\S]+\}/);
+    if (!m) throw new Error('no JSON');
+    const obj = JSON.parse(m[0]);
+    const keys = ['技術機能','管理能力','自律独立','安定安全','起業家精神','社会貢献','純粋挑戦','ライフスタイル'];
+    const scores = keys.map(k => Math.max(0, Math.min(100, parseInt(obj[k]) || 0)));
+    S._careerScores = scores;
+    save();
+    el.innerHTML = _buildCareerAnchorSVG(scores);
+  } catch(e) {
+    el.innerHTML = '<div style="color:#f87171;font-size:11px;padding:8px;">分析に失敗しました。再度お試しください</div>';
+  }
+  if (btn) { btn.textContent = '再診断'; btn.disabled = false; }
+}
+
+async function generatePersonality() {
+  const btn = document.getElementById('btn-personality-gen');
+  const el  = document.getElementById('dash-personality-result');
+  if (!el) return;
+  if (btn) { btn.textContent = '生成中...'; btn.disabled = true; }
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:11px;padding:12px;">AIが言語化中です…</div>';
+
+  const dreams  = (S.bucketList || []).slice(0, 20).map(d => d.text).join('、');
+  const mandala = S.areas.map(a => `${a.name}：${a.goal||'未設定'}`).join('、');
+  const prompt = `以下のデータからその人の人柄・在り方を一言で定義してください。
+【夢リスト】${dreams || '未登録'}
+【MANDALA目標】${mandala}
+【ライフテーマ】${S.mainGoal || '未設定'}
+
+ルール:
+1. 「〇〇〇〇（サブタイトル）」の形式で回答（例: アンチャーテッドクリエイター（地図にない領域を創造し創り出す人））
+2. ポジティブで独創的な表現を使う
+3. 本人が誇りに思えるような言葉で
+4. 一文のみ回答、説明不要`;
+
+  try {
+    const text = await callGemini(prompt);
+    if (!text) throw new Error('no response');
+    const clean = text.trim().replace(/^["「]|["」]$/g, '');
+    S._personality = clean;
+    save();
+    el.innerHTML = `
+      <div style="padding:14px 10px;">
+        <div style="font-size:15px;font-weight:900;background:linear-gradient(135deg,#c9a050,#f2d98c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.5;margin-bottom:4px;">${esc(clean)}</div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = '<div style="color:#f87171;font-size:11px;padding:8px;">生成に失敗しました。再度お試しください</div>';
+  }
+  if (btn) { btn.textContent = '再生成'; btn.disabled = false; }
+}
+
+
+
+function _refreshDashDreams() {
+  // ライフテーマ
+  const ltEl = document.getElementById('dreams-tab-lifetheme');
+  if (ltEl) ltEl.textContent = S.mainGoal || '（未設定 — HOMEの編集ボタンから入力）';
+
+  const radarEl   = document.getElementById('dash-dual-radar-svg');
+  const listEl    = document.getElementById('dash-dreams-list');
+  const radarWrap = document.getElementById('dash-dual-radar-wrap');
+  const cntEl     = document.getElementById('dreams-tab-count');
+  const doneEl    = document.getElementById('dreams-tab-done');
+  if (!listEl) return;
+
+  const dreams = S.bucketList || [];
+  const done   = dreams.filter(d => d.done).length;
+  if (cntEl)  cntEl.textContent  = dreams.length;
+  if (doneEl) doneEl.textContent = done;
+
+  // 夢レーダー
+  if (radarEl) {
+    const unachieved = new Array(8).fill(0);
+    const achieved   = new Array(8).fill(0);
+    dreams.forEach(d => {
+      const idx2 = (d.categoryId >= 0 && d.categoryId < 8) ? d.categoryId : 0;
+      if (d.done) achieved[idx2]++; else unachieved[idx2]++;
+    });
+    const total = [...unachieved,...achieved].reduce((a,b)=>a+b,0);
+    if (radarWrap) radarWrap.style.display = total === 0 ? 'none' : 'block';
+    if (total > 0) radarEl.innerHTML = _buildDualRadarSVG(unachieved, achieved);
+  }
+
+  if (dreams.length === 0) {
     listEl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px;">夢がまだ登録されていません<br><button onclick="showPage('list')" style="margin-top:10px;background:none;border:1px solid var(--gold-border);color:var(--gold);border-radius:8px;padding:6px 16px;cursor:pointer;font-size:11px;">夢を追加する →</button></div>`;
     return;
   }
-  listEl.innerHTML = S.areas.map((area, idx) => {
-    const dreams = (S.dreams||[]).filter(d => d.categoryId===idx);
-    const imgs = (area.dreamImages||[]).slice(0,4);
-    if (!dreams.length && !imgs.length) return '';
-    const items = dreams.map(d => `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-        <div style="width:16px;height:16px;border-radius:50%;border:1.5px solid ${d.done?'#4ade80':'rgba(212,175,113,0.4)'};background:${d.done?'rgba(74,222,128,0.15)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          ${d.done?'<svg width="8" height="8" viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,3" stroke="#4ade80" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':''}
-        </div>
-        <span style="font-size:12px;color:${d.done?'var(--text-muted)':'var(--text-primary)'};text-decoration:${d.done?'line-through':'none'};flex:1;">${esc(d.text)}</span>
-      </div>`).join('');
-    const imgStrip = imgs.length ? `
-      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
-        ${imgs.map(img=>`
-          <div style="flex-shrink:0;width:72px;height:54px;border-radius:8px;overflow:hidden;background:var(--bg-raised);">
-            <img src="${esc(img.url)}" alt="${esc(img.caption||'')}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
-          </div>`).join('')}
-      </div>` : '';
-    return `<div class="card" style="padding:12px 14px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span style="font-size:16px;">${area.emoji}</span>
-        <span style="font-size:11px;font-weight:800;letter-spacing:0.1em;color:var(--gold);">${esc(area.name)}</span>
-        <span style="margin-left:auto;font-size:10px;color:var(--text-muted);">${dreams.filter(d=>d.done).length}/${dreams.length} 達成</span>
-      </div>${imgStrip}${items}</div>`;
+
+  // 夢リストをカテゴリ別に表示
+  listEl.innerHTML = S.areas.map((area, aIdx) => {
+    const items = dreams.filter(d => d.categoryId === aIdx);
+    if (!items.length) return '';
+    const rows = items.map((d, dIdx) => {
+      const gi = dreams.indexOf(d);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <button onclick="toggleDreamDone(${gi})" style="width:18px;height:18px;border-radius:50%;border:1.5px solid ${d.done?'#4ade80':'rgba(212,175,113,0.4)'};background:${d.done?'rgba(74,222,128,0.15)':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;">
+          ${d.done?'<svg width="9" height="9" viewBox="0 0 10 10"><polyline points="2,5 4.5,7.5 8,3" stroke="#4ade80" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
+        </button>
+        <span style="flex:1;font-size:12px;color:${d.done?'var(--text-muted)':'var(--text-primary)'};${d.done?'text-decoration:line-through;':''}">${esc(d.text)}</span>
+      </div>`;
+    }).join('');
+    return `<div class="card" style="padding:12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:18px;">${area.emoji}</span>
+        <span style="font-size:11px;font-weight:700;color:${area.color};">${esc(area.name)}</span>
+        <span style="font-size:10px;color:var(--text-muted);margin-left:auto;">${items.length}件</span>
+      </div>
+      ${rows}
+    </div>`;
   }).join('');
 }
 
+function toggleDreamDone(idx) {
+  if (!S.bucketList[idx]) return;
+  S.bucketList[idx].done = !S.bucketList[idx].done;
+  save();
+  _refreshDashDreams();
+}
+
 function _refreshDashMandala() {
+  // ライフテーマ
+  const ltEl = document.getElementById('mandala-tab-lifetheme');
+  if (ltEl) ltEl.textContent = S.mainGoal || '（未設定 — HOMEの編集ボタンから入力）';
+
+  // 達成率計算
+  let totalTasks = 0, doneTasks = 0;
+  S.areas.forEach(a => {
+    (a.tasks || []).forEach(t => {
+      totalTasks++;
+      const today = todayStr();
+      const isDone = t.recurring ? !!(t.history && t.history[today]) : !!t.done;
+      if (isDone) doneTasks++;
+    });
+  });
+  const pct = totalTasks > 0 ? Math.round(doneTasks / totalTasks * 100) : 0;
+  const pctEl  = document.getElementById('mandala-tab-pct');
+  const barEl  = document.getElementById('mandala-tab-bar');
+  const doneEl = document.getElementById('mandala-tab-done');
+  const totEl  = document.getElementById('mandala-tab-total');
+  if (pctEl)  pctEl.textContent  = pct + '%';
+  if (barEl)  barEl.style.width  = pct + '%';
+  if (doneEl) doneEl.textContent = doneTasks;
+  if (totEl)  totEl.textContent  = totalTasks;
+
+  // カテゴリ別タスクカード（フル表示）
   const el = document.getElementById('dash-mandala-cards');
   if (!el) return;
-  el.innerHTML = S.areas.map((area, idx) => {
-    const actionTags = (area.actions||[]).slice(0,4).map(ac =>
-      `<span style="font-size:10px;background:rgba(212,175,113,0.08);border:1px solid rgba(212,175,113,0.2);border-radius:6px;padding:2px 8px;color:var(--gold);">${esc(ac)}</span>`
-    ).join('');
-    const taskList = (area.tasks||[]).slice(0,3).map(t =>
-      `<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);padding:3px 0;">
-        <div style="width:5px;height:5px;border-radius:50%;background:${t.done?'#4ade80':'rgba(212,175,113,0.4)'};flex-shrink:0;"></div>${esc(t.text)}</div>`
-    ).join('');
+  const today = todayStr();
+
+  el.innerHTML = S.areas.map((area, aIdx) => {
+    const tasks = area.tasks || [];
+    const taskRows = tasks.length === 0
+      ? `<div style="font-size:11px;color:var(--text-muted);padding:6px 0;">タスクなし — MANDALAで追加できます</div>`
+      : tasks.map((t, tIdx) => {
+          const isDone = t.recurring ? !!(t.history && t.history[today]) : !!t.done;
+          const isEditing = (S._editingTask && S._editingTask.aIdx === aIdx && S._editingTask.tIdx === tIdx);
+          if (isEditing) {
+            return `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+              <input id="task-edit-input-${aIdx}-${tIdx}" type="text" value="${esc(t.text||t.name||'')}"
+                style="flex:1;font-size:12px;background:rgba(255,255,255,0.06);border:1px solid var(--gold-border);border-radius:6px;padding:5px 8px;color:var(--text-primary);"
+                onkeydown="if(event.key==='Enter')saveDashTaskEdit(${aIdx},${tIdx})"
+              />
+              <button onclick="saveDashTaskEdit(${aIdx},${tIdx})" style="background:var(--gold);border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;color:#110a00;cursor:pointer;">保存</button>
+              <button onclick="cancelDashTaskEdit()" style="background:none;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:5px 8px;font-size:11px;color:var(--text-muted);cursor:pointer;">×</button>
+            </div>`;
+          }
+          const label = esc(t.text || t.name || '');
+          const tagBadge = t.recurring ? '<span style="font-size:9px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#818cf8;border-radius:4px;padding:1px 5px;margin-left:4px;">毎日</span>' : (t.due ? `<span style="font-size:9px;color:var(--text-muted);margin-left:4px;">${t.due}</span>` : '');
+          return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <button onclick="toggleDashTask(${aIdx},${tIdx})" style="width:20px;height:20px;border-radius:6px;border:1.5px solid ${isDone?'#4ade80':area.color+'88'};background:${isDone?'rgba(74,222,128,0.15)':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;">
+              ${isDone?'<svg width="10" height="10" viewBox="0 0 12 12"><polyline points="2.5,6 5,8.5 9.5,3.5" stroke="#4ade80" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>':''}
+            </button>
+            <span style="flex:1;font-size:12px;color:${isDone?'var(--text-muted)':'var(--text-primary)'};${isDone?'text-decoration:line-through;':''}">${label}${tagBadge}</span>
+            <button onclick="startDashTaskEdit(${aIdx},${tIdx})" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:2px 4px;opacity:0.6;">✎</button>
+          </div>`;
+        }).join('');
+
+    const doneCnt = tasks.filter(t => t.recurring ? !!(t.history && t.history[today]) : !!t.done).length;
+    const progPct = tasks.length > 0 ? Math.round(doneCnt / tasks.length * 100) : 0;
+
     return `<div class="card" style="padding:14px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <div style="width:38px;height:38px;border-radius:10px;background:${area.color}22;border:1.5px solid ${area.color}55;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${area.emoji}</div>
+        <div style="width:36px;height:36px;border-radius:10px;background:${area.color}22;border:1.5px solid ${area.color}55;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${area.emoji}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:9px;color:var(--text-muted);letter-spacing:0.12em;font-weight:700;text-transform:uppercase;">${esc(area.name)}</div>
-          <div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-top:3px;line-height:1.3;">${area.goal?esc(area.goal):'<span style="color:var(--text-muted);font-weight:400;font-size:11px;">目標未設定</span>'}</div>
+          <div style="font-size:9px;color:var(--text-muted);letter-spacing:0.1em;font-weight:700;text-transform:uppercase;">${esc(area.name)}</div>
+          <div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:2px;line-height:1.3;">${area.goal ? esc(area.goal) : '<span style="color:var(--text-muted);font-weight:400;font-size:11px;">目標未設定</span>'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:11px;font-weight:700;color:${area.color};">${progPct}%</div>
+          <div style="font-size:10px;color:var(--text-muted);">${doneCnt}/${tasks.length}</div>
         </div>
       </div>
-      ${actionTags?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">${actionTags}</div>`:''}
-      ${taskList?`<div style="margin-bottom:10px;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;">${taskList}</div>`:''}
-      <button onclick="_genTasksFromActions(${idx})" id="gen-task-btn-${idx}" style="width:100%;padding:9px;background:linear-gradient(135deg,rgba(212,175,113,0.1),rgba(212,175,113,0.04));border:1px solid rgba(212,175,113,0.28);border-radius:9px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.06em;">
-        ✦ AIでタスクを生成する
-      </button>
-      <div id="gen-task-result-${idx}" style="margin-top:8px;display:none;"></div>
+      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">${taskRows}</div>
     </div>`;
   }).join('');
+}
+
+function toggleDashTask(aIdx, tIdx) {
+  const task = S.areas[aIdx]?.tasks[tIdx];
+  if (!task) return;
+  if (task.recurring) {
+    const today = todayStr();
+    if (!task.history) task.history = {};
+    task.history[today] = !task.history[today];
+  } else {
+    task.done = !task.done;
+  }
+  save();
+  _refreshDashMandala();
+  refreshDashboard();
+}
+
+function startDashTaskEdit(aIdx, tIdx) {
+  S._editingTask = { aIdx, tIdx };
+  _refreshDashMandala();
+  setTimeout(() => {
+    const inp = document.getElementById(`task-edit-input-${aIdx}-${tIdx}`);
+    if (inp) inp.focus();
+  }, 50);
+}
+
+function saveDashTaskEdit(aIdx, tIdx) {
+  const inp = document.getElementById(`task-edit-input-${aIdx}-${tIdx}`);
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  const task = S.areas[aIdx]?.tasks[tIdx];
+  if (!task) return;
+  if ('text' in task) task.text = val; else task.name = val;
+  S._editingTask = null;
+  save();
+  _refreshDashMandala();
+}
+
+function cancelDashTaskEdit() {
+  S._editingTask = null;
+  _refreshDashMandala();
 }
 
 async function _genTasksFromActions(areaIdx) {
@@ -3133,6 +3339,27 @@ function refreshDashboard() {
   // ようこそ 空状態
   const welcomeEl = document.getElementById('dash-welcome');
   if (welcomeEl) welcomeEl.style.display = hasAnyGoal ? 'none' : 'block';
+
+  // キャリアアンカー・人柄定義パネルの表示制御
+  const careerWrap = document.getElementById('dash-career-wrap');
+  const personalityWrap = document.getElementById('dash-personality-wrap');
+  if (careerWrap) careerWrap.style.display = hasAnyGoal ? 'block' : 'none';
+  if (personalityWrap) personalityWrap.style.display = hasAnyGoal ? 'block' : 'none';
+
+  // 保存済みキャリアアンカーを復元
+  if (hasAnyGoal && S._careerScores && Array.isArray(S._careerScores)) {
+    const radarEl = document.getElementById('dash-career-radar');
+    if (radarEl && radarEl.querySelector('svg') === null) {
+      radarEl.innerHTML = _buildCareerAnchorSVG(S._careerScores);
+    }
+  }
+  // 保存済み人柄定義を復元
+  if (hasAnyGoal && S._personality) {
+    const persEl = document.getElementById('dash-personality-result');
+    if (persEl && !persEl.querySelector('div > div')) {
+      persEl.innerHTML = `<div style="padding:14px 10px;"><div style="font-size:15px;font-weight:900;background:linear-gradient(135deg,#c9a050,#f2d98c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.5;">${esc(S._personality)}</div></div>`;
+    }
+  }
 
   const owrap = document.getElementById('dash-overall-wrap');
   if (hasAnyGoal) {
@@ -4178,6 +4405,7 @@ function renderGoalTabContent() {
                     <span style="font-size:10px;color:var(--text-muted);">今日: ${todayDone?'✅ 完了':'⬜ 未'}</span>
                   </div>
                 </div>
+                <button style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:4px;" onclick="editGoalTask(${origIdx})" title="編集">✎</button>
                 <button style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:4px;" onclick="deleteTask(${origIdx})">✕</button>
               </div>
               <!-- Weekly mini-heatmap (last 7 days) -->
@@ -4215,6 +4443,7 @@ function renderGoalTabContent() {
                 <div style="font-size:13px;font-weight:500;${t.done?'text-decoration:line-through;color:var(--text-muted);':''}">${esc(t.name)}</div>
                 ${t.due?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">📅 ${formatDate(t.due)}</div>`:''}
               </div>
+              <button style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:0 4px;" onclick="editGoalTask(${origIdx})" title="編集">✎</button>
               <button style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:0 4px;" onclick="deleteTask(${origIdx})">✕</button>
             </div>`;
           }).join('')}
@@ -4248,6 +4477,20 @@ function renderGoalTabContent() {
 function saveAreaGoal() {
   const el=document.getElementById('area-goal-inp'); if(!el) return;
   S.areas[S.currentAreaId].goal=el.value.trim(); save(); showToast('目標を保存しました ✦');
+}
+
+function editGoalTask(taskIdx) {
+  const task = S.areas[S.currentAreaId]?.tasks[taskIdx];
+  if (!task) return;
+  const currentName = task.name || task.text || '';
+  const newName = prompt('タスク名を編集してください', currentName);
+  if (newName !== null && newName.trim()) {
+    if ('text' in task) task.text = newName.trim();
+    else task.name = newName.trim();
+    save();
+    renderGoalTabContent();
+    showToast('タスクを更新しました ✦');
+  }
 }
 function updateProgress(val) { /* removed – auto-computed from tasks */ }
 
@@ -4721,6 +4964,9 @@ function exportPDF() {
   if (!win) { showToast('ポップアップをブロックされています。ブラウザで許可してください'); return; }
   win.document.write(buildPrintDocument());
   win.document.close();
+  // 戻るボタンを表示
+  const backWrap = document.getElementById('pdf-back-wrap');
+  if (backWrap) backWrap.style.display = 'block';
 }
 
 function buildMandalaTable() {
@@ -5211,9 +5457,7 @@ if (S.authToken) {
 // 初回起動時にウィザードを表示
 // サーバー上（Vercel等）ではAIは自動接続されるので表示しない
 // ローカルファイル起動かつ未設定の場合のみ表示
-if (!isHostedOnServer() && !S.apiKey && !S.workerUrl) {
-  setTimeout(showWizard, 800);
-}
+// AI wizard suppressed - Netlify auto-connect
 
 // ── Service Worker 登録（PWA対応）──────────────────────────────────────
 if ('serviceWorker' in navigator) {
