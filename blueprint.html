@@ -5883,6 +5883,27 @@ function _startHeartbeat() {
 }
 _startHeartbeat();
 
+// ★ Issue4修正: 5分ごとにクラウドと双方向同期（複数デバイス対応）
+let _cloudSyncTimer = null;
+let _cloudSyncCount = 0;
+function _startCloudSyncHeartbeat() {
+  if (_cloudSyncTimer) return;
+  _cloudSyncTimer = setInterval(async () => {
+    if (!S.authToken) return; // 未ログインはスキップ
+    _cloudSyncCount++;
+    _dlog('INFO', `[CloudSync] 定期同期 #${_cloudSyncCount}`);
+    const updated = await _dbLoad();
+    if (updated) {
+      refreshDashboard();
+      _dlog('INFO', '[CloudSync] クラウドデータを適用');
+    } else {
+      await _dbSaveNow();
+      _dlog('INFO', '[CloudSync] ローカルデータをクラウドへアップロード');
+    }
+  }, 300000); // 5分ごと（300,000ms）
+}
+_startCloudSyncHeartbeat();
+
 // ─── アプリ終了・非表示時に緊急バックアップ ─────────────────────────────
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
@@ -5893,6 +5914,22 @@ document.addEventListener('visibilitychange', () => {
   } else if (document.visibilityState === 'visible') {
     // フォアグラウンド復帰時にIDBと同期確認
     _syncFromIDBIfNewer();
+    // ★ Issue3修正: ログイン中はクラウドとも同期（別デバイスの変更を取り込む）
+    if (S.authToken) {
+      setTimeout(async () => {
+        _dlog('INFO', '[Visibility] フォアグラウンド復帰 → クラウド同期チェック');
+        const updated = await _dbLoad();
+        if (updated) {
+          refreshDashboard();
+          showToast('☁️ 別デバイスのデータを同期しました');
+          _dlog('INFO', '[Visibility] クラウドデータを適用');
+        } else {
+          // ローカルの方が新しい or 同じ → クラウドにアップロード
+          await _dbSaveNow();
+          _dlog('INFO', '[Visibility] ローカルデータをクラウドへアップロード');
+        }
+      }, 800);
+    }
   }
 });
 window.addEventListener('pagehide', () => {
@@ -5912,11 +5949,21 @@ _dlog('INFO', '=== アプリ起動 ===', navigator.userAgent.substring(0, 60));
 _getOrCreateUserId();
 const _skipped = localStorage.getItem('mg_authSkipped') === '1';
 if (S.authToken) {
-  // ログイン済み → クラウド同期
-  _dlog('INFO', '[Start] authToken あり → クラウド同期');
+  // ログイン済み → クラウド双方向同期
+  _dlog('INFO', '[Start] authToken あり → クラウド同期開始');
   setTimeout(async () => {
     const updated = await _dbLoad();
-    if (updated) { showPage('dashboard'); showToast('☁️ クラウドからデータを同期しました'); }
+    if (updated) {
+      // クラウドが新しい → 適用してUI更新
+      showPage('dashboard');
+      showToast('☁️ クラウドからデータを同期しました');
+      _dlog('INFO', '[Start] クラウドデータを適用');
+    } else {
+      // ローカルが同じか新しい → ローカルをクラウドにアップロード
+      // （オフライン中の変更や別デバイスで未反映の変更を保護）
+      _dlog('INFO', '[Start] ローカルデータをクラウドへアップロード');
+      await _dbSaveNow();
+    }
     _updateSyncIndicator(S.authToken ? 'synced' : 'none');
   }, 1200);
 } else if (!_skipped) {
