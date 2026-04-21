@@ -2250,7 +2250,8 @@ function _handleAuthExpiry() {
   setTimeout(() => showAuthModal(), 1500);
 }
 
-async function _dbLoad() {
+// force=true のとき: タイムスタンプ比較を無視してクラウドデータを強制適用
+async function _dbLoad(_ = null, force = false) {
   if (!S.authToken) return false;
   try {
     const res = await _fetchTimeout('/API/db-load', {
@@ -2260,10 +2261,10 @@ async function _dbLoad() {
       cache: 'no-store',
     }, 10000);
     if (res.status === 401) { _handleAuthExpiry(); return false; }
-    if (!res.ok) { console.error('[dbLoad] HTTP', res.status); return false; }
+    if (!res.ok) { _dlog('ERROR','[dbLoad] HTTP', res.status); return false; }
     let _loadJson;
     try { _loadJson = await res.json(); }
-    catch (pe) { console.error('[dbLoad] JSON parse error', pe); return false; }
+    catch (pe) { _dlog('ERROR','[dbLoad] JSON parse error', pe); return false; }
     const { data: jsonStr } = _loadJson;
     if (!jsonStr) return false;
 
@@ -2272,14 +2273,18 @@ async function _dbLoad() {
 
     const localSavedAt = S._savedAt || 0;
     const dbSavedAt    = dbData._savedAt || 0;
-    if (dbSavedAt > localSavedAt) {
+    _dlog('INFO', '[dbLoad] local._savedAt:', localSavedAt, 'db._savedAt:', dbSavedAt, 'force:', force);
+
+    if (force || dbSavedAt > localSavedAt) {
       _applyStateData(dbData);
       try { localStorage.setItem('mg_v2', jsonStr); } catch {}
       _idbSave(jsonStr);
+      _dlog('INFO', '[dbLoad] クラウドデータを適用しました');
       return true;
     }
+    _dlog('INFO', '[dbLoad] ローカルの方が新しいためスキップ');
     return false;
-  } catch { return false; }
+  } catch (e) { _dlog('ERROR','[dbLoad] exception:', e.message); return false; }
 }
 
 function _updateSyncIndicator(state) {
@@ -2404,13 +2409,17 @@ async function doAuth() {
     S.authEmail        = data.email || email;
     S.userId           = data.userId || _getOrCreateUserId();
     localStorage.setItem('mg_userId', S.userId);
-    save();
+
+    // ① クラウドデータを強制取得（save()より前に実行してデータ保護）
+    //    force=true: _savedAt の比較を無視してクラウドデータを優先適用
     hideAuthModal();
     showToast(`✦ ようこそ、${S.authEmail}`);
+    const updated = await _dbLoad(null, true);
+    if (updated) showToast('☁️ クラウドからデータを同期しました');
 
-    // クラウドからデータ同期
-    const updated = await _dbLoad();
-    if (updated) { showPage('dashboard'); showToast('☁️ クラウドからデータを同期しました'); }
+    // ② 取り込んだデータを確定保存（クラウド再アップロードも含む）
+    save();
+    if (updated) showPage('dashboard');
     _updateSyncIndicator('synced');
     refreshSettings();
 
