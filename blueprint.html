@@ -2226,15 +2226,22 @@ async function _dbSaveNow() {
   if (!S.authToken) { _updateSyncIndicator('none'); return; }
   const data = JSON.stringify(S);
   try {
-    const res = await _fetchTimeout('/API/db-save', {
+    let res = await _fetchTimeout('/API/db-save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: S.authToken, data }),
       cache: 'no-store',
     }, 10000);
+    // 401 → トークン更新してリトライ
     if (res.status === 401) {
-      _handleAuthExpiry();
-      return;
+      const refreshed = await _tryTokenRefresh();
+      if (!refreshed) { _forceLogout(); return; }
+      res = await _fetchTimeout('/API/db-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: S.authToken, data }),
+        cache: 'no-store',
+      }, 10000);
     }
     _updateSyncIndicator(res.ok ? 'synced' : 'error');
   } catch {
@@ -2242,9 +2249,64 @@ async function _dbSaveNow() {
   }
 }
 
+// ★ サイレントトークン更新（refreshTokenを使って自動再ログイン）
+let _refreshing = false;
+async function _tryTokenRefresh() {
+  if (_refreshing) return false; // 二重実行防止
+  if (!S.authRefreshToken) return false;
+  _refreshing = true;
+  try {
+    _dlog('INFO', '[Auth] トークン期限切れ → リフレッシュ試行');
+    const res = await _fetchTimeout('/API/auth-refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: S.authRefreshToken }),
+      cache: 'no-store',
+    }, 8000);
+    if (!res.ok) { _dlog('WARN', '[Auth] リフレッシュ失敗 status:', res.status); return false; }
+    const data = await res.json();
+    if (!data.token) return false;
+    // 新しいトークンを保存
+    S.authToken        = data.token;
+    S.authRefreshToken = data.refreshToken || S.authRefreshToken;
+    // localStorage/IDBにも反映（save()は_savedAt更新するので直接書き込み）
+    try {
+      const raw = JSON.stringify(S);
+      localStorage.setItem('mg_v2', raw);
+      _idbSave(raw);
+    } catch {}
+    _dlog('INFO', '[Auth] トークン更新成功 → 同期継続');
+    return true;
+  } catch (e) {
+    _dlog('WARN', '[Auth] リフレッシュエラー:', e.message);
+    return false;
+  } finally {
+    _refreshing = false;
+  }
+}
+
 function _handleAuthExpiry() {
+  // リフレッシュトークンがある場合は強制ログアウトしない（非同期で更新を試みる）
+  if (S.authRefreshToken) {
+    _tryTokenRefresh().then(ok => {
+      if (ok) {
+        _updateSyncIndicator('synced');
+        _dlog('INFO', '[Auth] サイレント更新完了');
+      } else {
+        // リフレッシュも失敗 → ログアウト
+        _forceLogout();
+      }
+    });
+  } else {
+    _forceLogout();
+  }
+}
+
+function _forceLogout() {
   S.authToken = ''; S.authRefreshToken = '';
-  save();
+  const raw = JSON.stringify(S);
+  try { localStorage.setItem('mg_v2', raw); } catch {}
+  _idbSave(raw);
   _updateSyncIndicator('error');
   showToast('⚠️ セッションが切れました。再ログインしてください', 4000);
   setTimeout(() => showAuthModal(), 1500);
@@ -2254,13 +2316,23 @@ function _handleAuthExpiry() {
 async function _dbLoad(_ = null, force = false) {
   if (!S.authToken) return false;
   try {
-    const res = await _fetchTimeout('/API/db-load', {
+    let res = await _fetchTimeout('/API/db-load', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: S.authToken }),
       cache: 'no-store',
     }, 10000);
-    if (res.status === 401) { _handleAuthExpiry(); return false; }
+    // 401 → トークン更新してリトライ
+    if (res.status === 401) {
+      const refreshed = await _tryTokenRefresh();
+      if (!refreshed) { _forceLogout(); return false; }
+      res = await _fetchTimeout('/API/db-load', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: S.authToken }),
+        cache: 'no-store',
+      }, 10000);
+    }
     if (!res.ok) { _dlog('ERROR','[dbLoad] HTTP', res.status); return false; }
     let _loadJson;
     try { _loadJson = await res.json(); }
@@ -5948,24 +6020,45 @@ showPage('dashboard');
 _dlog('INFO', '=== アプリ起動 ===', navigator.userAgent.substring(0, 60));
 _getOrCreateUserId();
 const _skipped = localStorage.getItem('mg_authSkipped') === '1';
+
+async function _startupSync() {
+  // トークンがない場合はスキップ
+  if (!S.authToken) {
+    _updateSyncIndicator('none');
+    return;
+  }
+  _dlog('INFO', '[Start] authToken あり → クラウド同期開始');
+  // _dbLoad 内で401時は自動リフレッシュを試みる
+  const updated = await _dbLoad();
+  if (updated) {
+    showPage('dashboard');
+    showToast('☁️ クラウドからデータを同期しました');
+    _dlog('INFO', '[Start] クラウドデータを適用');
+    refreshDashboard();
+  } else if (S.authToken) {
+    // ローカルが同じか新しい → クラウドにアップロード
+    _dlog('INFO', '[Start] ローカルデータをクラウドへアップロード');
+    await _dbSaveNow();
+  }
+  _updateSyncIndicator(S.authToken ? 'synced' : 'none');
+}
+
 if (S.authToken) {
   // ログイン済み → クラウド双方向同期
-  _dlog('INFO', '[Start] authToken あり → クラウド同期開始');
+  setTimeout(_startupSync, 1200);
+} else if (S.authRefreshToken && !_skipped) {
+  // アクセストークン切れ・リフレッシュトークンあり → サイレント再ログイン
+  _dlog('INFO', '[Start] authToken なし・refreshToken あり → サイレント再ログイン試行');
   setTimeout(async () => {
-    const updated = await _dbLoad();
-    if (updated) {
-      // クラウドが新しい → 適用してUI更新
-      showPage('dashboard');
-      showToast('☁️ クラウドからデータを同期しました');
-      _dlog('INFO', '[Start] クラウドデータを適用');
+    const ok = await _tryTokenRefresh();
+    if (ok) {
+      _dlog('INFO', '[Start] サイレント再ログイン成功 → クラウド同期');
+      await _startupSync();
     } else {
-      // ローカルが同じか新しい → ローカルをクラウドにアップロード
-      // （オフライン中の変更や別デバイスで未反映の変更を保護）
-      _dlog('INFO', '[Start] ローカルデータをクラウドへアップロード');
-      await _dbSaveNow();
+      _dlog('INFO', '[Start] サイレント再ログイン失敗 → 認証モーダル表示');
+      setTimeout(showAuthModal, 300);
     }
-    _updateSyncIndicator(S.authToken ? 'synced' : 'none');
-  }, 1200);
+  }, 800);
 } else if (!_skipped) {
   // 未ログイン・スキップなし → 認証モーダルを表示
   _dlog('INFO', '[Start] 未ログイン → 認証モーダル表示');
